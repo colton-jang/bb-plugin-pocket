@@ -238,6 +238,7 @@
   .msg.assistant { overflow-wrap: anywhere; }
   .msg .when { font-size: 12px; color: var(--faint); margin-top: 4px; }
   .msg.user .when { text-align: right; }
+  .msg.user.waiting .bubble { opacity: .6; }
   .older { text-align: center; color: var(--faint); font-size: 13px; margin: 0 0 16px; }
   .working {
     display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 15px; margin: 4px 0 12px;
@@ -2158,7 +2159,7 @@ async function loadThread(id, first) {
     if (!state.thread) $("messages").innerHTML = `<div class="fail">Couldn't load this thread.<br>${esc(e.message)}</div>`;
   }
   const t = state.thread;
-  const fast = t && (isWorking(t.status) || t.interactions.length);
+  const fast = t && (isWorking(t.status) || t.interactions.length || t.messages.some((m) => m.state));
   schedule(() => loadThread(id, false), fast ? 3000 : 10000, `#/t/${id}`);
 }
 
@@ -2207,7 +2208,9 @@ function renderThread(first) {
     if (m.role === "user") {
       const long = m.text.length > 600 || m.text.split("\n").length > 8;
       const bubble = m.text ? `<div class="bubble${long ? " long" : ""}">${threadMentions(esc(m.text))}</div>` : "";
-      html.push(`<div class="msg user"><div>${bubble}${msgFiles(t.id, m.files)}<div class="when">${clock(m.at)}</div></div></div>`);
+      // Held in bb's queue: say so, so it doesn't look lost.
+      const when = m.state === "queued" ? `Queued${m.note ? ` · ${esc(m.note)}` : ""}` : clock(m.at);
+      html.push(`<div class="msg user${m.state ? " waiting" : ""}"><div>${bubble}${msgFiles(t.id, m.files)}<div class="when">${when}</div></div></div>`);
     } else {
       html.push(`<div class="msg assistant"><div class="md">${mdForThread(t.id, m.text)}</div><div class="when">${clock(m.at)}</div></div>`);
     }

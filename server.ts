@@ -42,6 +42,9 @@ const message = z.object({
   at: z.number(),
   // Files sent with the message (project attachments), shown under your bubble.
   files: z.array(z.object({ path: z.string(), name: z.string(), image: z.boolean() })).optional(),
+  // "queued": held in bb's queue, not yet sent to the agent; note says why.
+  state: z.enum(["queued"]).optional(),
+  note: z.string().nullable().optional(),
 });
 
 // A file picked in Pocket travels inside the send itself and is uploaded to the
@@ -635,6 +638,28 @@ export default async function plugin(bb: BbPluginApi) {
     }
     await bb.storage.kv.set(key, { seq, hit });
     return hit;
+  }
+
+  // Your messages bb is holding in its queue: sent while the thread was busy,
+  // scheduled with sendAt, or held by the concurrency limit ("4 of 4
+  // running"). The timeline only has a message once it's released, which can
+  // be minutes, so a queued send looked lost and got sent again (B33).
+  async function queuedMine(threadId: string): Promise<z.infer<typeof message>[]> {
+    const textOf = (parts: unknown) => {
+      const list = Array.isArray(parts) ? parts : [];
+      const text = list.map((p: any) => (p?.type === "text" && typeof p.text === "string" ? p.text : "")).join("\n").trim();
+      return text || (list.length ? "(attachment)" : "");
+    };
+    const queued = (await bb.sdk.threads.queuedMessages.list({ threadId }).catch(() => [])) as unknown as Array<any>;
+    const out: z.infer<typeof message>[] = [];
+    for (const q of queued) {
+      if (q?.initiator !== "user") continue;
+      const text = textOf(q.content);
+      if (!text) continue;
+      const note = q.waitingOn?.reason ?? (q.sendAt ? `Sends at ${new Date(q.sendAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : null);
+      out.push({ role: "user", text, at: q.createdAt ?? Date.now(), state: "queued", note: note ? String(note) : null });
+    }
+    return out.sort((a, b) => a.at - b.at);
   }
 
   async function managerIds(): Promise<Set<string>> {
@@ -1512,11 +1537,12 @@ export default async function plugin(bb: BbPluginApi) {
     },
 
     async thread({ threadId }) {
-      const [t, timeline, pending, names] = await Promise.all([
+      const [t, timeline, pending, names, waiting] = await Promise.all([
         bb.sdk.threads.get({ threadId }),
         bb.sdk.threads.timeline({ threadId, segmentLimit: "30" }),
         bb.sdk.threads.interactions.list({ threadId }),
         projectNames(),
+        queuedMine(threadId),
       ]);
 
       // Your messages, and the last thing the agent said in each turn. Tool
@@ -1624,7 +1650,11 @@ export default async function plugin(bb: BbPluginApi) {
         unread: isUnread(dto),
         pinned: Boolean(dto.pinnedAt),
         rec: rec && lastMsg?.role === "assistant" && rec.forAt === lastMsg.at ? { forAt: rec.forAt, pills: rec.pills, recommended: rec.recommended, reason: rec.reason, stake: rec.stake ?? "" } : null,
-        messages: messages.slice(-MESSAGES_MAX),
+        messages: [
+          ...messages,
+          // The timeline can pick a message up between the two reads.
+          ...waiting.filter((w) => !messages.some((m) => m.role === "user" && m.text === w.text && m.at >= w.at - 1000)),
+        ].slice(-MESSAGES_MAX),
         interactions,
       };
     },

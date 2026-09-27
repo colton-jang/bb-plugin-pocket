@@ -513,6 +513,30 @@
   .worb.live { background: var(--green); color: #fff; }
   .worb.speaking { background: var(--blue); color: #fff; transform: scale(1.06); }
   .worb.paused { background: var(--faint); color: #fff; }
+  /* Walk lock screen: dim, swallows every touch but the hold-to-unlock button. pk-wl* names are unique on purpose. */
+  #pkWalkLock { position: fixed; inset: 0; z-index: 60; background: #050506; color: #7d7b77; display: flex; flex-direction: column;
+    align-items: center; padding: calc(var(--safe-t) + 28px) 28px calc(var(--safe-b) + 34px); touch-action: none;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  #pkWalkLock[hidden] { display: none; }
+  .pk-wltop { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: #55534f; }
+  .pk-wltime { font-size: 44px; font-weight: 300; color: #9a9791; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .pk-wlmid { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; width: 100%; }
+  .pk-wlorb { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; color: #0b0b0c; background: #2f5b3c;
+    box-shadow: 0 0 0 0 rgba(63,160,90,.35); transition: background .25s, transform .25s; }
+  .pk-wlorb svg { width: 38px; height: 38px; display: inline-block; }
+  .pk-wlorb.live { animation: pkWlPulse 2.4s ease-out infinite; }
+  .pk-wlorb.speaking { background: #2c4f86; transform: scale(1.07); animation: none; box-shadow: 0 0 36px 6px rgba(60,110,200,.35); }
+  .pk-wlorb.paused { background: #3a3936; animation: none; }
+  .pk-wlorb.idle { background: #262523; animation: none; }
+  @keyframes pkWlPulse { 0% { box-shadow: 0 0 0 0 rgba(63,160,90,.35); } 70% { box-shadow: 0 0 0 22px rgba(63,160,90,0); } 100% { box-shadow: 0 0 0 0 rgba(63,160,90,0); } }
+  .pk-wlstatus { font-size: 17px; color: #a19e98; text-align: center; min-height: 1.4em; }
+  .pk-wlcap { font-size: 15px; line-height: 1.4; color: #5e5c58; text-align: center; max-width: 320px; min-height: 4.2em;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .pk-wlhold { position: relative; width: 84px; height: 84px; border-radius: 50%; border: 0; background: #151515; color: #8d8a85; padding: 0; }
+  .pk-wlhold svg.pk-wlicon { width: 28px; height: 28px; display: inline-block; }
+  .pk-wlhold svg.pk-wlring { position: absolute; inset: 0; width: 84px; height: 84px; transform: rotate(-90deg); display: block; }
+  .pk-wlring circle { fill: none; stroke: #c9c6bf; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 245; stroke-dashoffset: 245; }
+  .pk-wlhint { margin-top: 12px; font-size: 13px; color: #4f4d4a; }
   .captions { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 10px; }
   .cap { margin: 0 0 14px; font-size: 19px; line-height: 1.4; }
   .cap.you { color: var(--muted); font-size: 16px; }
@@ -782,6 +806,17 @@
   </div>
   <div class="controls" id="walkControls"></div>
 </main>
+<div id="pkWalkLock" hidden aria-label="Walk is locked">
+  <div class="pk-wltop">Walk · locked</div>
+  <div class="pk-wltime" id="pkWlTime">0:00</div>
+  <div class="pk-wlmid">
+    <div class="pk-wlorb live" id="pkWlOrb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/></svg></div>
+    <div class="pk-wlstatus" id="pkWlStatus">Listening</div>
+    <div class="pk-wlcap" id="pkWlCap"></div>
+  </div>
+  <button class="pk-wlhold" id="pkWlHold" aria-label="Hold to unlock"><svg class="pk-wlring" viewBox="0 0 84 84"><circle cx="42" cy="42" r="39"/></svg><svg class="pk-wlicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></button>
+  <div class="pk-wlhint" id="pkWlHint">Hold to unlock</div>
+</div>
 
 <div id="hold" hidden>
   <div class="card2"><span class="recdot"></span><b id="hClock">0:00</b><span id="hHint">Release to finish</span></div>
@@ -2757,7 +2792,8 @@ function renderWalk() {
     c.innerHTML = `<button class="btn primary" id="wStart">Start talking</button>`;
     $("wStart").onclick = startWalk;
   } else {
-    c.innerHTML = `<button class="btn danger" id="wEnd">End</button><button class="btn" id="wMic" ${walk.phase !== "live" ? "disabled" : ""}>${walk.micOff ? "Unmute" : "Mute"}</button><button class="btn" id="wQuiet" ${walk.phase !== "live" ? "disabled" : ""}>${walk.quiet ? "Hear replies" : "Quiet"}</button>`;
+    c.innerHTML = `<button class="btn danger" id="wEnd">End</button><button class="btn" id="wMic" ${walk.phase !== "live" ? "disabled" : ""}>${walk.micOff ? "Unmute" : "Mute"}</button><button class="btn" id="wQuiet" ${walk.phase !== "live" ? "disabled" : ""}>${walk.quiet ? "Hear replies" : "Quiet"}</button><button class="btn" id="wLock" ${walk.phase !== "live" ? "disabled" : ""}>Lock</button>`;
+    $("wLock").onclick = lockWalk;
     $("wEnd").onclick = () => endWalk("Session ended.");
     $("wMic").onclick = () => { walk.micOff = !walk.micOff; walk.stream?.getAudioTracks().forEach((t) => t.enabled = !walk.micOff); renderWalk(); };
     $("wQuiet").onclick = () => {
@@ -2773,9 +2809,73 @@ function renderWalk() {
   r.hidden = !walk.receipts.length;
   r.innerHTML = walk.receipts.slice(0, 6).map((x) => `<button class="receipt" data-t="${x.threadId || ""}"><div>${esc(x.title)}</div><small>${esc(String(x.status || "").replaceAll("-", " "))}${x.detail ? ` · ${esc(x.detail)}` : ""}</small></button>`).join("");
   r.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => { if (b.dataset.t) location.hash = `#/t/${b.dataset.t}`; });
+  syncWalkLock();
 }
 
-function walkStatus(text) { $("walkStatus").textContent = text; }
+// ---------- walk lock ----------
+// iOS stops a web page's mic when the phone locks, so Walk keeps the screen on.
+// Locking puts up a dim screen that swallows every touch in a pocket; only a
+// long hold on the button at the bottom unlocks it.
+const WALK_UNLOCK_MS = 1500;
+const wl = { on: false, tick: 0, hold: null };
+function lockWalk() {
+  if (walk.phase !== "live") return;
+  wl.on = true;
+  $("pkWalkLock").hidden = false;
+  clearInterval(wl.tick);
+  wl.tick = setInterval(syncWalkLock, 1000);
+  syncWalkLock();
+}
+function unlockWalk() {
+  if (!wl.on) return;
+  wl.on = false;
+  clearInterval(wl.tick);
+  resetHold();
+  $("pkWalkLock").hidden = true;
+}
+function syncWalkLock() {
+  if (!wl.on) return;
+  const secs = walk.liveAt ? Math.floor((Date.now() - walk.liveAt) / 1000) : 0;
+  $("pkWlTime").textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`;
+  const speaking = $("worb").classList.contains("speaking");
+  const state = walk.phase !== "live" ? "idle" : speaking ? "speaking" : walk.micOff ? "paused" : "live";
+  $("pkWlOrb").className = `pk-wlorb ${state}`;
+  const st = $("walkStatus").textContent;
+  $("pkWlStatus").textContent = state === "speaking" ? (walk.quiet ? "BB is replying (quiet)" : "BB is talking")
+    : state === "paused" ? "Mic muted" : /Checking|limit|minute|didn't/i.test(st) ? st : "Listening";
+  const last = walk.captions[walk.captions.length - 1];
+  $("pkWlCap").textContent = last ? `${last.speaker === "you" ? "You" : "BB"}: ${last.text.trim().slice(-220)}` : "";
+}
+// The orb's speaking flicker comes from the audio stream; mirror it without touching that path.
+new MutationObserver(syncWalkLock).observe($("worb"), { attributes: true, attributeFilter: ["class"] });
+function resetHold() {
+  if (wl.hold) { cancelAnimationFrame(wl.hold.raf); wl.hold = null; }
+  $("pkWlHold").querySelector("circle").style.strokeDashoffset = "245";
+  $("pkWlHint").textContent = "Hold to unlock";
+}
+(() => {
+  const el = $("pkWalkLock"), btn = $("pkWlHold"), ring = btn.querySelector("circle");
+  // Every touch on the lock screen stops here: no taps, scrolls, zooms or swipes reach the page.
+  for (const type of ["touchstart", "touchmove", "touchend", "click", "dblclick", "contextmenu", "wheel", "gesturestart"]) {
+    el.addEventListener(type, (e) => { e.preventDefault(); e.stopPropagation(); }, { passive: false });
+  }
+  btn.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    resetHold();
+    const t0 = performance.now();
+    $("pkWlHint").textContent = "Keep holding…";
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / WALK_UNLOCK_MS);
+      ring.style.strokeDashoffset = String(245 * (1 - k));
+      if (k >= 1) { resetHold(); unlockWalk(); return; }
+      wl.hold.raf = requestAnimationFrame(step);
+    };
+    wl.hold = { raf: requestAnimationFrame(step) };
+  });
+  for (const type of ["pointerup", "pointercancel", "pointerleave"]) btn.addEventListener(type, resetHold);
+})();
+
+function walkStatus(text) { $("walkStatus").textContent = text; syncWalkLock(); }
 function walkSend(obj) { if (walk.ws?.readyState === 1) walk.ws.send(JSON.stringify(obj)); }
 function caption(speaker, text) {
   const last = walk.captions[walk.captions.length - 1];
@@ -2850,7 +2950,7 @@ async function startWalk() {
         return;
       }
       const e = JSON.parse(data);
-      if (e.type === "ready") { mark("ready"); ready = true; clearTimeout(giveUp); walk.phase = "live"; walkStatus("Listening. Talk whenever you like."); renderWalk(); keepAwake(); }
+      if (e.type === "ready") { mark("ready"); ready = true; walk.liveAt = Date.now(); clearTimeout(giveUp); walk.phase = "live"; walkStatus("Listening. Talk whenever you like."); renderWalk(); keepAwake(); }
       if (e.type === "transcript") caption(e.speaker, e.text);
       if (e.type === "flush") node.port.postMessage({ type: "flush" });
       if (e.type === "playback") { walk.quiet = !e.enabled; renderWalk(); }
@@ -2879,6 +2979,7 @@ async function startWalk() {
 }
 
 function endWalk(message) {
+  unlockWalk();
   // One line per session so a failure on the phone can be read on the server.
   if (walk.trace) {
     const t = walk.trace; walk.trace = null;

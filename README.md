@@ -48,6 +48,8 @@ or login: if you can open bb, you can open Pocket.
 - **Siri, Action Button & share sheet:** an iOS Shortcut dictates with Apple's own dictation and sends to your
   manager thread after a 3-second countdown. Setup is inside Pocket (home screen → *Talk to bb from Siri…*).
 - **Walk** (optional): a hands-free live voice session, if you also have the Talk to BB plugin installed.
+  iPhone stops a web page's microphone when the phone locks, so Walk keeps the screen on. Tap **Lock** for a dim
+  screen that ignores pocket touches and shows what BB is doing; hold the button at the bottom to unlock.
 - **Drafts** (optional): a reminder list of unsent Gmail and Slack drafts, if you configure a source.
 
 **Safety rails:**

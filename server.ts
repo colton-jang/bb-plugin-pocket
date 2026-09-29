@@ -9,12 +9,18 @@
 // and no second login.
 import { execFile } from "node:child_process";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { connect as h2connect, constants as h2, type ClientHttp2Session } from "node:http2";
 import { readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, dirname, extname, isAbsolute, join, normalize } from "node:path";
 import { parseEnv } from "node:util";
 import { defineRpcContract, type BbPluginApi } from "@get-bb/plugin-sdk";
 import { z } from "zod";
+import {
+  APNS_HOST, JWT_TTL_MS, RateLimit, UNSAFE_PILL, apnsHeaders, apnsJwt, buildPayload, buildTestPayload, describeApproval, emptyState,
+  inQuietHours, interactionNotice, isDeadToken, normalizePrefs, plainText, redacted, replyChoices, safePill, verdict,
+  type Choice, type Notice, type NotifState, type NotifyPrefs,
+} from "./notify.ts";
 
 const threadRow = z.object({
   id: z.string(),
@@ -51,6 +57,8 @@ const message = z.object({
 // thread's project on the server, so the page never names a server path.
 const upFile = z.object({ name: z.string().min(1).max(200), mime: z.string().max(100), data: z.string().min(1).max(34_000_000) });
 const MAX_UPLOAD_BYTES = 30 * 1024 * 1024;
+// Where page.html loads talk.js; GET /app puts the file inline there.
+export const TALK_TAG = '<script src="./talk.js"></script>';
 
 const choice = z.object({ label: z.string(), value: z.string(), description: z.string().nullable() });
 
@@ -96,6 +104,10 @@ const artifact = z.object({
 
 const threadId = z.string().regex(/^thr_[a-z0-9]+$/);
 const ok = z.object({ ok: z.boolean() });
+// How the phone opens a Gmail draft: "app" just opens the Gmail app (the only
+// link known to work); the rest are candidates tried on #/draft-links. None of
+// them composes, so none can duplicate or send a draft.
+const GMAIL_LINKS = ["app", "cv0", "cv1", "cvMail", "tlDrafts", "mweb"] as const;
 
 export const rpcContract = defineRpcContract({
   home: {
@@ -207,7 +219,7 @@ export const rpcContract = defineRpcContract({
     output: z.object({
       enabled: z.boolean(),
       gmail: z.array(z.object({
-        id: z.string(), hexId: z.string(), to: z.string(), subject: z.string(), snippet: z.string(),
+        id: z.string(), hexId: z.string(), threadId: z.string(), to: z.string(), subject: z.string(), snippet: z.string(),
         at: z.number(), agent: z.boolean(), older: z.number(),
       })),
       slack: z.array(z.object({
@@ -215,6 +227,10 @@ export const rpcContract = defineRpcContract({
       })),
       teamId: z.string().nullable(),
       gmailError: z.string().nullable(),
+      // Which link the phone uses for a Gmail draft (picked on #/draft-links), and the
+      // signed-in address for the links that name the account.
+      gmailLink: z.enum(GMAIL_LINKS),
+      account: z.string().nullable(),
     }),
   },
   draftBody: {
@@ -222,6 +238,7 @@ export const rpcContract = defineRpcContract({
     output: z.object({ to: z.string(), cc: z.string(), subject: z.string(), body: z.string() }),
   },
   dismissDraft: { input: z.object({ key: z.string().max(100) }), output: ok },
+  setGmailLink: { input: z.object({ style: z.enum(GMAIL_LINKS) }), output: ok },
   // Quick replies: tappable suggestions under the agent's latest message.
   // Which pills you actually tap: the one-week test of "more opinionated when stale".
   // Long swipe left in Needs you: mark read and keep it out of Needs you (and
@@ -305,6 +322,55 @@ export const rpcContract = defineRpcContract({
   artifactsSeen: {
     input: z.object({ ids: z.array(z.string().max(40)).max(500) }),
     output: ok,
+  },
+  // The Pocket iOS app registers its APNs device token here (on every launch;
+  // re-registering the same token just refreshes lastSeen).
+  registerDevice: {
+    input: z.object({ token: z.string().regex(/^[0-9a-fA-F]{32,200}$/), env: z.enum(["sandbox", "production"]), bundleId: z.string().min(1).max(200) }),
+    output: ok,
+  },
+  // Sends one TEST notification to every registered device (or logs it, in a
+  // dry run) and says what APNs answered. It names no thread and has no
+  // buttons, so it can never act on a thread. `threadId` is accepted and ignored.
+  testNotification: {
+    input: z.object({ threadId: threadId.optional() }).nullable(),
+    output: z.object({
+      dryRun: z.boolean(),
+      devices: z.number(),
+      results: z.array(z.object({ device: z.string(), env: z.string(), status: z.number(), reason: z.string().nullable() })),
+      payload: z.string(),
+    }),
+  },
+  // The Notifications screen: where push stands, your settings, the devices.
+  notifyStatus: {
+    input: z.null(),
+    output: z.object({
+      serverOn: z.boolean(),   // the plugin's `notifications` setting (bb plugin config)
+      keyReady: z.boolean(),   // an APNs key, key id and team id are set
+      dryRun: z.boolean(),     // nothing leaves the server: logged only
+      quietNow: z.boolean(),
+      prefs: z.object({
+        kinds: z.object({ approval: z.boolean(), question: z.boolean(), reply: z.boolean() }),
+        quiet: z.object({ on: z.boolean(), start: z.string(), end: z.string(), tz: z.string() }),
+      }),
+      devices: z.array(z.object({ id: z.string(), env: z.string(), bundleId: z.string(), matches: z.boolean(), addedAt: z.number(), lastSeen: z.number() })),
+    }),
+  },
+  setNotifyPrefs: {
+    input: z.object({
+      kinds: z.object({ approval: z.boolean(), question: z.boolean(), reply: z.boolean() }),
+      quiet: z.object({ on: z.boolean(), start: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), end: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), tz: z.string().min(1).max(64) }),
+    }),
+    output: ok,
+  },
+  // Forget a registered device (by the last 6 characters of its token, as shown).
+  forgetDevice: { input: z.object({ id: z.string().regex(/^[0-9a-f]{6}$/) }), output: ok },
+  // About & what's new: this plugin's version and changelog, and the iPhone
+  // app's changelog if its path is configured (the page compares it with the
+  // installed build the app reports over the bridge).
+  about: {
+    input: z.null(),
+    output: z.object({ pocketVersion: z.string(), pocketChangelog: z.string(), iosChangelog: z.string().nullable() }),
   },
 });
 
@@ -584,6 +650,33 @@ export default async function plugin(bb: BbPluginApi) {
       type: "string",
       label: "Drafts: env file with SLACK_USER_TOKEN (optional)",
       description: "Lets Pocket drop a Slack draft once you've sent a matching message.",
+      default: "",
+    },
+    notifications: {
+      type: "boolean",
+      label: "Notifications: push to the Pocket iOS app",
+      description: "Approvals, questions, and agent replies that need you, sent to the Pocket app through Apple Push. Needs the APNs key below.",
+      default: false,
+    },
+    notificationsDryRun: {
+      type: "boolean",
+      label: "Notifications: dry run",
+      description: "Log what would be sent instead of sending. Also in effect while the APNs key, key id or team id is missing.",
+      default: true,
+    },
+    apnsKeyFile: { type: "string", label: "Notifications: APNs key file (.p8) on the bb server", default: "" },
+    apnsKeyId: { type: "string", label: "Notifications: APNs key id", description: "The 10-character Key ID shown next to the key in Apple's developer portal.", default: "" },
+    apnsTeamId: { type: "string", label: "Notifications: Apple team id", default: "" },
+    apnsBundleId: {
+      type: "string",
+      label: "Notifications: app bundle id (optional)",
+      description: "When set, only devices registered by this app get notifications. Empty: each device's own bundle id is used.",
+      default: "",
+    },
+    iosChangelogFile: {
+      type: "string",
+      label: "iPhone app changelog (optional)",
+      description: "Path on the bb server to the Pocket iPhone app's CHANGELOG.md. Pocket's About screen uses it to show what's built vs. installed.",
       default: "",
     },
   });
@@ -921,6 +1014,9 @@ export default async function plugin(bb: BbPluginApi) {
       ["gmail", "users", "drafts", "list", "--params", JSON.stringify({ userId: "me", maxResults: 60 })],
     );
     const items = list.drafts ?? [];
+    // A draft sent or deleted anywhere is simply missing from the list.
+    const live = new Set(items.map((d) => d.message.id));
+    for (const k of draftMeta.keys()) if (!live.has(k)) draftMeta.delete(k);
     const queue = items.filter((d) => !draftMeta.has(d.message.id));
     const worker = async () => {
       for (let d = queue.shift(); d; d = queue.shift()) {
@@ -956,6 +1052,16 @@ export default async function plugin(bb: BbPluginApi) {
       .sort((a, b) => b.at - a.at);
   }
 
+  // The address Gmail is signed in as, for links that name the account.
+  let gmailAccount: string | null = null;
+  async function gmailAddress() {
+    if (!gmailAccount) {
+      try { gmailAccount = (await gws<{ emailAddress?: string }>(["gmail", "users", "getProfile", "--params", JSON.stringify({ userId: "me" })])).emailAddress ?? null; }
+      catch { /* links that need it are just left out */ }
+    }
+    return gmailAccount;
+  }
+
   let slackAuth: { token: string; team: string | null; user: string | null } | null = null;
   async function slack(): Promise<typeof slackAuth> {
     if (slackAuth) return slackAuth;
@@ -973,21 +1079,40 @@ export default async function plugin(bb: BbPluginApi) {
 
   const norm = (s: string) => s.toLowerCase().replace(/<[^>]*>/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 
-  // Slack drafts can't be listed with a user token, so your tools log each one they
-  // file. A draft counts as sent once a message from you with the same
-  // opening appears in that conversation after the draft was made.
+  // Did this message of yours send the draft? Its opening matches, or you edited
+  // it first and kept a good share of its words.
+  const words = (s: string) => new Set(norm(s).split(" ").filter((w) => w.length >= 4));
+  function sendsDraft(draft: string, message: string) {
+    const opening = norm(draft).slice(0, 40);
+    if (opening && norm(message).startsWith(opening)) return true;
+    const dw = words(draft), mw = words(message);
+    const shared = [...dw].filter((w) => mw.has(w)).length;
+    return shared >= 2 && shared / dw.size >= 0.25;
+  }
+
+  // Slack drafts can't be listed or looked up with a user token (drafts.list and
+  // drafts.info answer not_allowed_token_type), so your tools log each one they
+  // file, and a draft deleted in Slack can't be seen from here. What Pocket can
+  // know: a draft is gone once you send it (edited or not), a newer draft to the
+  // same conversation replaces it (Slack keeps one per conversation), you can
+  // remove one yourself, and after a few days it ages out.
+  const SLACK_DRAFT_DAYS = 3;
   async function slackDrafts() {
     let text: string;
     const { slackDraftsLog } = await settings.get();
     if (!slackDraftsLog) return [];
     try { text = await readFile(expandHome(slackDraftsLog), "utf8"); } catch { return []; }
-    const since = Date.now() / 1000 - 7 * 86400;
+    const since = Date.now() / 1000 - SLACK_DRAFT_DAYS * 86400;
     const rows = text.trim().split("\n").flatMap((l) => { try { return [JSON.parse(l)]; } catch { return []; } })
       .filter((r) => r.ts >= since && r.channel && r.text) as Array<{ ts: number; draft_id: string | null; channel: string; target: string; thread: string | null; text: string }>;
     const sentKeys = new Set((await bb.storage.kv.get<string[]>("slackSent")) ?? []);
     const auth = await slack();
     const out = [];
-    for (const r of rows.reverse()) {
+    const slots = new Set<string>();
+    for (const r of rows.sort((a, b) => b.ts - a.ts)) {
+      const slot = `${r.channel}:${r.thread ?? ""}`;
+      if (slots.has(slot)) continue; // replaced by a newer draft here
+      slots.add(slot);
       const key = r.draft_id ?? `${r.channel}:${r.ts}`;
       if (sentKeys.has(key)) continue;
       let sent = false;
@@ -996,9 +1121,9 @@ export default async function plugin(bb: BbPluginApi) {
           const url = r.thread
             ? `https://slack.com/api/conversations.replies?channel=${r.channel}&ts=${r.thread}&oldest=${Math.floor(r.ts) - 1}&limit=100`
             : `https://slack.com/api/conversations.history?channel=${r.channel}&oldest=${Math.floor(r.ts) - 1}&limit=100`;
-          const h = (await (await fetch(url, { headers: { authorization: `Bearer ${auth.token}` } })).json()) as { messages?: Array<{ user?: string; text?: string }> };
-          const opening = norm(r.text).slice(0, 40);
-          sent = (h.messages ?? []).some((m) => m.user === auth.user && opening.length > 0 && norm(m.text ?? "").startsWith(opening.slice(0, Math.min(40, opening.length))));
+          const h = (await (await fetch(url, { headers: { authorization: `Bearer ${auth.token}` } })).json()) as { messages?: Array<{ user?: string; text?: string; ts?: string }> };
+          // Replies always include the thread's first message, even from before the draft.
+          sent = (h.messages ?? []).some((m) => m.user === auth.user && Number(m.ts) >= r.ts - 1 && sendsDraft(r.text, m.text ?? ""));
         } catch { /* unknown: keep showing it */ }
       }
       if (sent) { sentKeys.add(key); continue; }
@@ -1014,18 +1139,22 @@ export default async function plugin(bb: BbPluginApi) {
     const dismissed = new Set((await bb.storage.kv.get<string[]>("draftsDismissed")) ?? []);
     let gmail: Array<GmailDraft & { older: number }> = [];
     let gmailError: string | null = null;
+    let account: string | null = null;
     if (useGmail) {
       await refreshGwsCfg();
-      try { gmail = await gmailDrafts(); } catch (e) { gmailError = e instanceof Error ? e.message : String(e); }
+      try { gmail = await gmailDrafts(); account = await gmailAddress(); } catch (e) { gmailError = e instanceof Error ? e.message : String(e); }
     }
     const slackItems = await slackDrafts();
     const auth = await slack();
+    const style = await bb.storage.kv.get<string>("gmailLink");
     return {
       enabled,
-      gmail: gmail.filter((d) => !dismissed.has(d.hexId)).map(({ threadId: _t, ...d }) => d),
+      gmail: gmail.filter((d) => !dismissed.has(d.hexId)),
       slack: slackItems.filter((d) => !dismissed.has(d.key)),
       teamId: auth?.team ?? null,
       gmailError,
+      gmailLink: (GMAIL_LINKS as readonly string[]).includes(style ?? "") ? style as typeof GMAIL_LINKS[number] : "app",
+      account,
     };
   }
 
@@ -1043,8 +1172,6 @@ export default async function plugin(bb: BbPluginApi) {
     "Skip open-ended options like 'Something else' or 'Other'; every pill must be a complete instruction on its own.",
     "Prefer decisive replies over questions. No pleasantries.",
   ].join(" ");
-
-  const UNSAFE_PILL = /\b(send|sends|sent|post|posts|publish|forward|e-?mail (it|him|her|them)|reply all|delete|remove|archive|trash)\b/i;
 
   // Fallback without the model: a closing yes/no question gets Yes / Not now.
   function heuristicPills(msg: string) {
@@ -1125,8 +1252,6 @@ export default async function plugin(bb: BbPluginApi) {
       .filter((p) => p.label?.trim() && p.text?.trim())
       .map((p) => ({ label: p.label!.trim().slice(0, 40), text: p.text!.trim().slice(0, 400) }));
   }
-  const safePill = (p: { label: string; text: string }) =>
-    !UNSAFE_PILL.test(`${p.label} ${p.text}`) && !/^(something else|other|none of these)\.?$/i.test(p.text.trim());
 
   type Rec = { forAt: number; attn: number; pills: Array<{ label: string; text: string }>; recommended: number; reason: string; stake: string };
 
@@ -1283,6 +1408,215 @@ export default async function plugin(bb: BbPluginApi) {
         try { await recommendSweep(); } catch (e) { bb.log.warn(`rec sweep: ${e instanceof Error ? e.message : e}`); }
         await sleep(5 * 60_000);
       }
+    },
+  });
+
+  // Quick-reply pills for the agent's message at `forAt`, cached per thread so
+  // the page and the notifier share one model call.
+  async function cachedPills(threadId: string, forAt: number, agent: string, user: string | null) {
+    const cached = await bb.storage.kv.get<{ forAt: number; pills: Choice[] }>(`sug4:${threadId}`);
+    if (cached && cached.forAt === forAt) return cached;
+    const value = { forAt, pills: await suggestFor(agent, user) };
+    await bb.storage.kv.set(`sug4:${threadId}`, value);
+    return value;
+  }
+
+  // ---- notifications ------------------------------------------------------
+  // The Pocket iOS app registers a device token; this service watches for
+  // what would put a thread in Needs you (a pending approval or question, an
+  // agent reply you haven't read, a stale-thread recommendation) and pushes
+  // one notification per agent message through APNs. Answers come back
+  // through the ordinary RPCs (send, approve, answer, setRead, dismiss).
+  type Device = { token: string; env: "sandbox" | "production"; bundleId: string; addedAt: number; lastSeen: number };
+  const devices = async () => (await bb.storage.kv.get<Device[]>("devices")) ?? [];
+  const NOTIFY_POLL_MS = 20_000;
+  const BACKLOG_MS = 30 * 60_000; // no backlog blast: older messages are passed over when notifications start
+  const notifyLimit = new RateLimit(6, 60_000);
+
+  let jwtCache: { ident: string; at: number; token: string } | null = null;
+  async function providerToken(keyFile: string, keyId: string, teamId: string): Promise<string> {
+    const ident = `${keyFile}|${keyId}|${teamId}`;
+    if (jwtCache && jwtCache.ident === ident && Date.now() - jwtCache.at < JWT_TTL_MS) return jwtCache.token;
+    const pem = await readFile(expandHome(keyFile), "utf8");
+    const token = apnsJwt(pem, keyId, teamId, Math.floor(Date.now() / 1000));
+    jwtCache = { ident, at: Date.now(), token };
+    return token;
+  }
+
+  const h2sessions = new Map<string, ClientHttp2Session>();
+  function h2session(origin: string): ClientHttp2Session {
+    const open = h2sessions.get(origin);
+    if (open && !open.closed && !open.destroyed) return open;
+    const s = h2connect(origin);
+    const drop = () => { if (h2sessions.get(origin) === s) h2sessions.delete(origin); };
+    s.on("error", (e) => { bb.log.warn(`apns connection: ${e.message}`); drop(); });
+    s.on("close", drop);
+    s.on("goaway", drop);
+    s.unref();
+    h2sessions.set(origin, s);
+    return s;
+  }
+  const closeSessions = () => { for (const s of h2sessions.values()) s.close(); h2sessions.clear(); };
+
+  function apnsPost(origin: string, deviceToken: string, headers: Record<string, string>, body: string): Promise<{ status: number; reason: string | null }> {
+    return new Promise((resolve, reject) => {
+      const req = h2session(origin).request({ ":method": "POST", ":path": `/3/device/${deviceToken}`, "content-type": "application/json", ...headers });
+      let status = 0;
+      let data = "";
+      req.setEncoding("utf8");
+      req.setTimeout(15_000, () => req.close(h2.NGHTTP2_CANCEL));
+      req.on("response", (h) => { status = Number(h[":status"]); });
+      req.on("data", (c: string) => { data += c; });
+      req.on("end", () => {
+        let reason: string | null = null;
+        try { reason = (JSON.parse(data) as { reason?: string }).reason ?? null; } catch { /* 200 has no body */ }
+        resolve({ status, reason: status ? reason : reason ?? "timeout" });
+      });
+      req.on("error", reject);
+      req.end(body);
+    });
+  }
+
+  const loadPrefs = async (): Promise<NotifyPrefs> => normalizePrefs(await bb.storage.kv.get("notifyPrefs"));
+  async function pushState() {
+    const cfg = await settings.get();
+    const keyReady = Boolean(cfg.apnsKeyFile && cfg.apnsKeyId && cfg.apnsTeamId);
+    return { cfg, keyReady, dryRun: cfg.notificationsDryRun !== false || !keyReady, want: (cfg.apnsBundleId || "").trim() };
+  }
+
+  /** Send one notice to every registered device, or log it in a dry run. */
+  async function deliver(n: Notice, opts: { passive?: boolean } = {}) {
+    const payload = buildPayload(n, opts);
+    return deliverPayload(payload, n.threadId, `${n.threadId} ${n.kind}${opts.passive ? " (quiet hours)" : ""}`, JSON.stringify(redacted(payload)));
+  }
+
+  async function deliverPayload(payload: object, collapseId: string, label: string, logged: string): Promise<{ dryRun: boolean; results: Array<{ device: string; env: string; status: number; reason: string | null }> }> {
+    const { cfg, keyReady, dryRun, want } = await pushState();
+    const all = await devices();
+    const targets = want ? all.filter((d) => d.bundleId === want) : all;
+    if (dryRun) {
+      bb.log.info(`notify (dry run${keyReady ? "" : ", no APNs key"}) ${label} → ${targets.length} device(s): ${logged}`);
+      return { dryRun: true, results: targets.map((d) => ({ device: `…${d.token.slice(-6)}`, env: d.env, status: 0, reason: "dry run" })) };
+    }
+    if (!targets.length) bb.log.info(`notify ${label}: no registered devices`);
+    const body = JSON.stringify(payload);
+    const results = [];
+    const dead = new Set<string>();
+    for (const d of targets) {
+      let r: { status: number; reason: string | null };
+      try {
+        const send = async () => apnsPost(APNS_HOST[d.env], d.token, apnsHeaders(d.bundleId, collapseId, await providerToken(cfg.apnsKeyFile, cfg.apnsKeyId, cfg.apnsTeamId)), body);
+        r = await send();
+        if (r.status === 403 && r.reason === "ExpiredProviderToken") { jwtCache = null; r = await send(); }
+      } catch (e) {
+        r = { status: 0, reason: e instanceof Error ? e.message.slice(0, 120) : "error" };
+      }
+      bb.log.info(`notify ${label} → …${d.token.slice(-6)} (${d.env}): ${r.status}${r.reason ? ` ${r.reason}` : ""}`);
+      if (isDeadToken(r.status, r.reason ?? undefined)) dead.add(d.token);
+      results.push({ device: `…${d.token.slice(-6)}`, env: d.env, status: r.status, reason: r.reason });
+    }
+    if (dead.size) {
+      // Re-read so a registration that landed meanwhile isn't lost.
+      await bb.storage.kv.set("devices", (await devices()).filter((d) => !dead.has(d.token)));
+      bb.log.info(`dropped ${dead.size} unregistered device(s)`);
+    }
+    return { dryRun: false, results };
+  }
+
+  // Home's rows: top-level threads, plus children that are pinned or blocked
+  // on a question. Anything else is hidden in Pocket and never notifies.
+  const onHome = (t: Dto) => !t.parentThreadId || t.hasPendingInteraction || t.pinnedAt;
+
+  let enabledSince: number | null = null;
+  async function notifyPoll() {
+    if (!(await settings.get()).notifications) { enabledSince = null; return; }
+    enabledSince ??= Date.now();
+    const cutoff = enabledSince - BACKLOG_MS;
+    const list = ((await bb.sdk.threads.list({ archived: false, limit: 300 })) as Dto[]).filter(onHome);
+    const found: Array<{ n: Notice; threadId: string }> = [];
+    const nextState = new Map<string, NotifState>();
+    for (const t of list) {
+      if (await isDismissed(t)) continue;
+      const key = `notif:${t.id}`;
+      const st = (await bb.storage.kv.get<NotifState>(key)) ?? emptyState();
+      const next: NotifState = { ...st, ints: [...st.ints] };
+      const attn = t.latestAttentionAt ?? 0;
+      const fresh = st.attn !== attn || st.upd !== t.updatedAt;
+      const title = titleOf(t);
+      try {
+        if (fresh && t.hasPendingInteraction) {
+          // 1. A permission request or question is waiting on you.
+          const pending = (await bb.sdk.threads.interactions.list({ threadId: t.id })) as unknown as Array<{ id: string; status: string; createdAt: number; payload: Record<string, any> }>;
+          for (const i of pending.filter((x) => x.status === "pending" && !st.ints.includes(x.id))) {
+            next.ints.push(i.id);
+            if (verdict({ forAt: i.createdAt, handledForAt: 0, cutoff, lastReadAt: t.lastReadAt, needsUnread: true }) !== "notify") continue;
+            const n = interactionNotice(t.id, title, i);
+            if (n) found.push({ n, threadId: t.id });
+          }
+          next.ints = next.ints.slice(-50);
+        } else if (fresh && isUnread(t) && !isWorking(statusOf(t))) {
+          // 2. The agent finished and its reply is waiting, unread.
+          const turn = await lastTurn(t.id);
+          if (turn) {
+            const v = verdict({ forAt: turn.forAt, handledForAt: st.forAt, cutoff, lastReadAt: t.lastReadAt, needsUnread: true });
+            // Read already: not handled, so a later recommendation can still notify.
+            if (v === "notify" || v === "old") next.forAt = turn.forAt;
+            if (v === "notify") {
+              const rec = await currentRec(t).catch(() => null);
+              const pills = rec?.forAt === turn.forAt ? null : await cachedPills(t.id, turn.forAt, turn.agent, turn.user).catch(() => null);
+              const c = replyChoices(turn.forAt, rec, pills);
+              found.push({ threadId: t.id, n: { threadId: t.id, kind: "reply", title, body: plainText(turn.agent) || "Replied", forAt: turn.forAt, ...c } });
+            }
+          }
+        }
+        // 3. A stale-thread recommendation for a message not yet notified. It
+        // shows in Needs you whether or not you've read the thread, so it
+        // notifies either way.
+        const rec = await currentRec(t).catch(() => null);
+        if (rec && rec.recommended >= 0 && verdict({ forAt: rec.forAt, handledForAt: next.forAt, cutoff, lastReadAt: t.lastReadAt, needsUnread: false }) === "notify") {
+          next.forAt = rec.forAt;
+          const turn = rec.stake ? null : await lastTurn(t.id).catch(() => null);
+          const body = rec.stake || (turn?.forAt === rec.forAt ? plainText(turn.agent) : "") || rec.reason || "Has a recommended reply";
+          found.push({ threadId: t.id, n: { threadId: t.id, kind: "reply", title, body: plainText(body), forAt: rec.forAt, ...replyChoices(rec.forAt, rec, null) } });
+        }
+      } catch (e) {
+        bb.log.warn(`notify check ${t.id}: ${e instanceof Error ? e.message : e}`);
+        continue; // looked at again next poll
+      }
+      next.attn = attn;
+      next.upd = t.updatedAt;
+      if (JSON.stringify(next) !== JSON.stringify(st)) nextState.set(t.id, next);
+    }
+    // Newest first under the rate limit; a thread whose notice has to wait
+    // keeps its old state, so the next poll finds it again.
+    found.sort((a, b) => b.n.forAt - a.n.forAt);
+    // Your settings: a kind you turned off is marked handled and never sent;
+    // in quiet hours it's sent silently (Notification Center, no sound).
+    const prefs = await loadPrefs();
+    const quiet = inQuietHours(prefs);
+    for (const f of found) {
+      if (!prefs.kinds[f.n.kind]) { bb.log.info(`notify ${f.threadId} ${f.n.kind}: off in your settings, not sent`); continue; }
+      if (!notifyLimit.take(Date.now())) { nextState.delete(f.threadId); continue; }
+      try { await deliver(f.n, { passive: quiet }); } catch (e) { bb.log.warn(`notify ${f.threadId} ${f.n.kind}: ${e instanceof Error ? e.message : e}`); }
+    }
+    for (const [id, st] of nextState) await bb.storage.kv.set(`notif:${id}`, st);
+  }
+
+  bb.background.service("notify", {
+    async start(signal) {
+      const sleep = (ms: number) => new Promise<void>((resolve) => {
+        const done = () => { signal.removeEventListener("abort", onAbort); resolve(); };
+        const onAbort = () => { clearTimeout(timer); done(); };
+        const timer = setTimeout(done, ms);
+        signal.addEventListener("abort", onAbort, { once: true });
+      });
+      enabledSince = null; // a restart doesn't replay what arrived while it was down
+      await sleep(5_000);
+      while (!signal.aborted) {
+        try { await notifyPoll(); } catch (e) { bb.log.warn(`notify poll: ${e instanceof Error ? e.message : e}`); }
+        await sleep(NOTIFY_POLL_MS);
+      }
+      closeSessions();
     },
   });
 
@@ -1571,24 +1905,7 @@ export default async function plugin(bb: BbPluginApi) {
         .map((i): z.infer<typeof interaction> => {
           const p = i.payload as Record<string, any>;
           if (p.kind === "approval") {
-            const s = p.subject ?? {};
-            let summary = "Approve this step?";
-            let detail: string | null = p.reason ?? null;
-            if (s.kind === "command") {
-              summary = "Run a command";
-              detail = s.command;
-            } else if (s.kind === "file_change") {
-              summary = "Change files";
-              detail = s.writeScope ?? detail;
-            } else if (s.kind === "permission_grant") {
-              summary = `Grant permissions${s.toolName ? ` to ${s.toolName}` : ""}`;
-            } else if (s.kind === "plan") {
-              summary = "Approve the plan";
-              detail = s.plan;
-            } else if (s.kind === "tool_use") {
-              summary = s.presentation?.title ?? s.presentation?.label?.pending ?? `Use ${s.tool}`;
-              detail = s.presentation?.detail ?? detail;
-            }
+            const { summary, detail } = describeApproval(p);
             return {
               kind: "approval",
               id: i.id,
@@ -1878,6 +2195,13 @@ export default async function plugin(bb: BbPluginApi) {
       return { ok: true };
     },
 
+    async setGmailLink({ style }) {
+      await bb.storage.kv.set("gmailLink", style);
+      bb.log.info(`drafts: phone Gmail link set to ${style}`);
+      if (draftsCache) draftsCache.at = 0;
+      return { ok: true };
+    },
+
     async dismiss({ threadId, undo, wasUnread }) {
       if (undo) {
         await bb.storage.kv.delete(`dismissed:${threadId}`);
@@ -2079,13 +2403,8 @@ export default async function plugin(bb: BbPluginApi) {
       // Only when the agent spoke last and is done.
       if (!last || last.role !== "assistant" || isWorking(statusOf(t as unknown as Dto)) || (t as any).hasPendingInteraction) return { forAt: 0, pills: [] };
       const forAt = typeof last.createdAt === "number" ? last.createdAt : 0;
-      const cached = await bb.storage.kv.get<{ forAt: number; pills: Array<{ label: string; text: string }> }>(`sug4:${threadId}`);
-      if (cached && cached.forAt === forAt) return cached;
       const prevUser = [...rows].reverse().find((r) => r.role === "user");
-      const pills = await suggestFor(last.text as string, prevUser ? (prevUser.text as string) : null);
-      const value = { forAt, pills };
-      await bb.storage.kv.set(`sug4:${threadId}`, value);
-      return value;
+      return cachedPills(threadId, forAt, last.text as string, prevUser ? (prevUser.text as string) : null);
     },
 
     async threadArtifacts({ threadId }) {
@@ -2104,11 +2423,72 @@ export default async function plugin(bb: BbPluginApi) {
       await markSeen(ids);
       return { ok: true };
     },
+
+    async registerDevice({ token, env, bundleId }) {
+      const list = await devices();
+      const now = Date.now();
+      const t = token.toLowerCase();
+      const prev = list.find((d) => d.token === t);
+      if (prev) Object.assign(prev, { env, bundleId, lastSeen: now });
+      else list.push({ token: t, env, bundleId, addedAt: now, lastSeen: now });
+      await bb.storage.kv.set("devices", list);
+      bb.log.info(`device ${prev ? "seen" : "registered"} …${t.slice(-6)} (${env}, ${list.length} total)`);
+      return { ok: true };
+    },
+
+    async testNotification() {
+      const payload = buildTestPayload();
+      const r = await deliverPayload(payload, "pocket-test", "test", JSON.stringify(payload));
+      return { dryRun: r.dryRun, devices: r.results.length, results: r.results, payload: JSON.stringify(payload, null, 2) };
+    },
+
+    async notifyStatus() {
+      const { cfg, keyReady, dryRun, want } = await pushState();
+      const prefs = await loadPrefs();
+      return {
+        serverOn: cfg.notifications === true,
+        keyReady,
+        dryRun,
+        quietNow: inQuietHours(prefs),
+        prefs,
+        devices: (await devices()).map((d) => ({ id: d.token.slice(-6), env: d.env, bundleId: d.bundleId, matches: !want || d.bundleId === want, addedAt: d.addedAt, lastSeen: d.lastSeen })),
+      };
+    },
+
+    async setNotifyPrefs(input) {
+      const prefs = normalizePrefs(input);
+      await bb.storage.kv.set("notifyPrefs", prefs);
+      bb.log.info(`notify prefs: ${JSON.stringify(prefs)}`);
+      return { ok: true };
+    },
+
+    async about() {
+      const pkg = JSON.parse((await asset("package.json")).toString("utf8")) as { version?: string };
+      const pocketChangelog = await asset("CHANGELOG.md").then((b) => b.toString("utf8")).catch(() => "");
+      const path = ((await settings.get()).iosChangelogFile || "").trim();
+      let iosChangelog: string | null = null;
+      if (path) {
+        try { iosChangelog = (await readFile(expandHome(path), "utf8")).slice(0, 200_000); } catch { iosChangelog = null; }
+      }
+      return { pocketVersion: pkg.version ?? "?", pocketChangelog: pocketChangelog.slice(0, 200_000), iosChangelog };
+    },
+
+    async forgetDevice({ id }) {
+      const list = await devices();
+      const kept = list.filter((d) => d.token.slice(-6) !== id);
+      if (kept.length === list.length) throw new Error("No device with that id");
+      await bb.storage.kv.set("devices", kept);
+      bb.log.info(`device forgotten …${id}`);
+      return { ok: true };
+    },
   });
 
   // ---- HTTP ---------------------------------------------------------------
   bb.http.route("GET", "/app", async () => {
-    const html = (await asset("page.html")).toString("utf8");
+    // talk.js (the Walk transcript and Conversations helpers, shared with the
+    // tests) goes inline, so the page never runs without it.
+    const talk = (await asset("talk.js")).toString("utf8");
+    const html = (await asset("page.html")).toString("utf8").replace(TALK_TAG, () => `<script>\n${talk}</script>`);
     return new Response(html, {
       headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" },
     });

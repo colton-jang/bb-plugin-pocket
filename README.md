@@ -51,6 +51,11 @@ or login: if you can open bb, you can open Pocket.
   iPhone stops a web page's microphone when the phone locks, so Walk keeps the screen on. Tap **Lock** for a dim
   screen that ignores pocket touches and shows what BB is doing; hold the button at the bottom to unlock.
 - **Drafts** (optional): a reminder list of unsent Gmail and Slack drafts, if you configure a source.
+- **Notifications** (with the Pocket iPhone app): home → Notifications to choose what notifies you, set quiet hours,
+  see your registered phones and send a harmless test. See NOTIFICATIONS.md for turning push on.
+- **Notifications** (optional, for the Pocket iOS app): approvals, questions and agent replies that need you, pushed
+  through Apple Push with up to three one-tap answers. Off by default, and it needs your own APNs key. See
+  [NOTIFICATIONS.md](NOTIFICATIONS.md).
 
 **Safety rails:**
 - A pill can never tell an agent to send, post, forward, email, delete or archive anything. That's filtered on the

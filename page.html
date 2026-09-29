@@ -540,7 +540,7 @@
   .pk-wlhint { margin-top: 12px; font-size: 13px; color: #4f4d4a; }
   .captions { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 10px; }
   .cap { margin: 0 0 14px; font-size: 19px; line-height: 1.4; }
-  .cap.you { color: var(--muted); font-size: 16px; }
+  .cap.k-you { color: var(--muted); font-size: 16px; }
   .cap b { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
   .receipts { border-top: 1px solid var(--line); padding: 8px 0; max-height: 26dvh; overflow-y: auto; flex: none; }
   .receipt { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 8px 0; }
@@ -628,8 +628,53 @@
     border-radius: 12px; padding: 12px; max-height: 50dvh; overflow-y: auto; }
   .draft .hdr { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
   .glyph.gmail { background: #cf3f36; } .glyph.slackg { background: #4a154b; }
+  .draft .hint a { color: inherit; }
+  .dlink { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin: 10px 0; }
+  .dlink.picked { border-color: var(--accent); }
+  .dlink .t { font-weight: 600; }
+  .dlink .btns { margin-top: 8px; }
   details.olderdrafts summary { list-style: none; padding: 14px 20px; color: var(--muted); font-size: 14px; }
   details.olderdrafts summary::-webkit-details-marker { display: none; }
+
+  /* ---------- Conversations ---------- */
+  .mbtns { display: flex; align-items: center; gap: 8px; flex: none; }
+  .masthead h1 { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .masthead .pill { white-space: nowrap; }
+  .pill.icon { padding: 8px 10px; }
+  @media (max-width: 400px) {
+    .masthead { padding-left: 18px; padding-right: 14px; }
+    .masthead h1 { font-size: 24px; }
+    .mbtns { gap: 6px; }
+    .masthead .pill { padding: 7px 10px 7px 8px; gap: 5px; font-size: 13px; }
+    .masthead .pill svg { width: 16px; height: 16px; }
+    .masthead .pill.icon { padding: 7px 8px; }
+  }
+  .conv { border-bottom: 1px solid var(--line); }
+  .conv > button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 12px 20px; }
+  .conv > button:active { background: var(--tap); }
+  .conv .cm { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--faint); font-size: 13px; }
+  .conv .cp { margin-top: 4px; font-size: 15px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .conv .cp.none { color: var(--faint); }
+  .stag { display: inline-block; border-radius: 6px; padding: 1px 7px; font-size: 12px; font-weight: 700; color: #fff; background: var(--faint); }
+  .stag.s-walk { background: var(--green); } .stag.s-hey-bb { background: var(--blue); } .stag.s-check-in { background: var(--amber); }
+  .conv .live { color: var(--green); font-weight: 600; }
+  .conv .copen { padding: 0 20px 16px; }
+  .cturn { margin: 0 0 12px; font-size: 16px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .cturn.k-you { color: var(--muted); font-size: 15px; }
+  .cturn b, .cap b { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+  .cturn.k-thread b, .cap.k-thread b { color: var(--blue); }
+  .cturn b button, .cap b button { border: 0; background: none; padding: 0; font: inherit; color: inherit; letter-spacing: inherit; text-transform: none; font-size: 12px; font-weight: 700; }
+  .cturn .tag { font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .capsw { margin: 4px 0 14px; text-align: center; font-size: 12px; color: var(--faint); letter-spacing: .04em; }
+  .capsw::before, .capsw::after { content: "—"; margin: 0 6px; }
+  .cacts { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 8px; }
+  .cacts h3, .cnotes h3 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 4px 0 4px; }
+  .cact { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 7px 0; color: var(--ink); font-size: 15px; }
+  .cact small { display: block; color: var(--muted); font-size: 13px; }
+  .cact.link div { color: var(--blue); }
+  .cnotes { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 8px; font-size: 15px; }
+  .cnotes p { margin: 4px 0; }
+  .cnotes .gone { color: var(--faint); }
 
   /* ---------- Tell ---------- */
   .tellv { min-height: 100dvh; display: flex; flex-direction: column; padding: calc(var(--safe-t) + 40px) 22px calc(var(--safe-b) + 20px); }
@@ -651,6 +696,40 @@
   .setup .urlbox { font: 12px/1.4 ui-monospace, "SF Mono", Menlo, monospace; background: var(--code); border-radius: 10px; padding: 10px; overflow-wrap: anywhere; margin: 8px 0; }
   .setup h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 22px 0 4px; }
   .setuplink { display: block; margin: 26px 20px 0; color: var(--muted); font-size: 14px; text-decoration: none; }
+  .setuplink + .setuplink { margin-top: 12px; }
+  /* Notifications screen. pk-nt* names are unique on purpose. */
+  .pk-ntstatus { border-radius: 14px; padding: 12px 14px; margin: 6px 0 4px; background: var(--surface); border: 1px solid var(--line); }
+  .pk-ntstatus b { display: block; font-size: 16px; margin-bottom: 2px; }
+  .pk-ntstatus span { color: var(--muted); font-size: 14px; }
+  .pk-ntstatus.live b { color: var(--green); }
+  .pk-ntstatus.practice b { color: var(--amber); }
+  .pk-ntrow { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .pk-ntrow:last-child { border-bottom: 0; }
+  .pk-ntrow .pk-nttext { flex: 1; min-width: 0; }
+  .pk-ntrow .pk-nttext div { font-size: 16px; }
+  .pk-ntrow .pk-nttext small { color: var(--muted); font-size: 13px; }
+  .pk-ntrow input[type="checkbox"] { width: 44px; height: 26px; flex: none; accent-color: var(--green); }
+  .pk-nttimes { display: flex; gap: 10px; align-items: center; padding: 6px 0 12px; }
+  .pk-nttimes label { flex: 1; font-size: 13px; color: var(--muted); }
+  .pk-nttimes input { display: block; width: 100%; margin-top: 4px; font: inherit; font-size: 16px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .pk-ntdev { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+  .pk-ntdev:last-child { border-bottom: 0; }
+  .pk-ntdev .pk-nttext { flex: 1; }
+  .pk-ntdev small { color: var(--muted); font-size: 13px; display: block; }
+  .pk-ntdev button { border: 0; background: none; color: var(--red); font-weight: 600; font-size: 14px; padding: 6px; }
+  .pk-nttest { margin-top: 8px; }
+  .pk-ntresult { font-size: 14px; color: var(--muted); margin-top: 10px; }
+  .pk-abcard { border-radius: 14px; padding: 12px 14px; margin: 6px 0 4px; background: var(--surface); border: 1px solid var(--line); font-size: 15px; }
+  .pk-abcard b { font-weight: 600; }
+  .pk-abcard small { color: var(--muted); font-size: 13px; display: block; margin-top: 2px; }
+  .pk-abcard.pk-abnew { border-color: var(--amber); }
+  .pk-abcard.pk-abnew > b { color: var(--amber); }
+  .pk-ablist { margin: 6px 0 10px; padding-left: 1.2em; }
+  .pk-ablist li { margin: 6px 0; }
+  .pk-abmd h2 { font-size: 15px; margin: 16px 0 4px; }
+  .pk-abmd ul { margin: 4px 0; }
+  #aboutBody details summary { color: var(--muted); font-size: 14px; padding: 10px 0; }
+  .pk-ntresult pre { font: 12px/1.4 ui-monospace, "SF Mono", Menlo, monospace; background: var(--code); border-radius: 10px; padding: 10px; overflow-x: auto; margin-top: 6px; color: var(--ink); }
 
   .toast {
     position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--safe-b) + 150px);
@@ -676,7 +755,11 @@
 <main id="home" class="view home" hidden>
   <div class="masthead">
     <h1>Pocket</h1>
-    <button class="pill" id="talkBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><path d="M21 15a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM3 15a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z"/></svg>Walk</button>
+    <div class="mbtns">
+      <button class="pill" id="talkBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><path d="M21 15a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM3 15a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z"/></svg>Walk</button>
+      <button class="pill" id="ambientBtn" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Ambient</button>
+      <button class="pill icon" id="convBtn" hidden aria-label="Conversations" title="Conversations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 10.5h7M8.5 14h4.5"/></svg></button>
+    </div>
   </div>
   <div class="srchbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search threads and artifacts" enterkeyhint="search" autocomplete="off" autocorrect="off"><button id="qCancel" hidden>Cancel</button></div>
   <div class="summary" id="summary"></div>
@@ -772,6 +855,16 @@
   <div id="draftList"></div>
 </main>
 
+<!-- ============ CONVERSATIONS (Talk to BB's notebook) ============ -->
+<main id="convos" class="view" hidden>
+  <div class="bar">
+    <button class="icon-btn" data-back aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="head"><div class="t">Conversations</div><div class="s">Walk, Hey BB and check-ins</div></div>
+    <span></span>
+  </div>
+  <div id="convList"></div>
+</main>
+
 <!-- ============ TELL (from the iOS Shortcut) ============ -->
 <main id="tell" class="view tellv" hidden>
   <div class="tbody">
@@ -790,6 +883,33 @@
     <span></span>
   </div>
   <div class="setup" id="setupBody"></div>
+</main>
+
+<main id="draftlinks" class="view" hidden>
+  <div class="bar">
+    <button class="icon-btn" data-back aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="head"><div class="t">Gmail draft links</div></div>
+    <span></span>
+  </div>
+  <div class="setup" id="draftLinksBody"><p>Loading…</p></div>
+</main>
+
+<main id="about" class="view" hidden>
+  <div class="bar">
+    <button class="icon-btn" data-back aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="head"><div class="t">About &amp; what's new</div></div>
+    <span></span>
+  </div>
+  <div class="setup" id="aboutBody"><p>Loading…</p></div>
+</main>
+
+<main id="notifs" class="view" hidden>
+  <div class="bar">
+    <button class="icon-btn" data-back aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="head"><div class="t">Notifications</div></div>
+    <span></span>
+  </div>
+  <div class="setup" id="notifsBody"><p>Loading…</p></div>
 </main>
 
 <!-- ============ WALK ============ -->
@@ -839,6 +959,7 @@
   <div class="sheet" id="sheet"></div>
 </div>
 
+<script src="./talk.js"></script>
 <script>
 "use strict";
 const API = "/api/v1/plugins/pocket/rpc/";
@@ -1426,11 +1547,13 @@ const micError = (e) => e?.name === "NotAllowedError" ? "Microphone blocked. All
 let sheetOpenedAt = 0;
 function openSheet(html) {
   sheetOpenedAt = Date.now();
+  resetSheetDrag();
   $("sheet").innerHTML = `<div class="grab"></div>${html}`;
   $("sheetWrap").hidden = false;
   return $("sheet");
 }
 function closeSheet() {
+  resetSheetDrag();
   $("sheetWrap").hidden = true;
   $("sheet").innerHTML = "";
   if (voice.phase === "recording") recorder.cancel();
@@ -1439,6 +1562,57 @@ function closeSheet() {
 // Tapping outside never throws away a recording in progress; Cancel does.
 // Lifting the finger after a long press lands a tap on the backdrop that just
 // appeared under it; that tap must not close the menu it opened.
+// Swipe a sheet down to dismiss it, as the grab bar promises. From the top of
+// the sheet's scroll only (so its own scrolling still works), or from the grab
+// bar at any scroll. Not from text fields, and never mid-recording (like the scrim).
+function resetSheetDrag() {
+  const sh = $("sheet"), sc = $("scrim");
+  sh.style.transition = ""; sh.style.transform = ""; sc.style.transition = ""; sc.style.opacity = "";
+}
+(() => {
+  const sh = $("sheet");
+  let y0 = 0, x0 = 0, t0 = 0, dy = 0, fromGrab = false, topAtStart = false, dragging = false, live = false;
+  sh.addEventListener("touchstart", (e) => {
+    const p = e.touches[0];
+    live = !!p && e.touches.length === 1 && !e.target.closest("input, textarea, select, [contenteditable]");
+    if (!live) return;
+    y0 = p.clientY; x0 = p.clientX; t0 = performance.now(); dy = 0; dragging = false;
+    fromGrab = !!e.target.closest(".grab") || p.clientY - sh.getBoundingClientRect().top < 28;
+    topAtStart = sh.scrollTop <= 0;
+  }, { passive: true });
+  sh.addEventListener("touchmove", (e) => {
+    if (!live) return;
+    const p = e.touches[0];
+    dy = p.clientY - y0;
+    if (!dragging) {
+      if (dy > 8 && dy > Math.abs(p.clientX - x0) && (fromGrab || (topAtStart && sh.scrollTop <= 0))
+          && voice.phase !== "recording" && voice.phase !== "transcribing") dragging = true;
+      else if (Math.abs(dy) > 8 || Math.abs(p.clientX - x0) > 8) { live = false; return; }
+      else return;
+    }
+    e.preventDefault(); // the sheet moves instead of scrolling
+    const d = Math.max(0, dy);
+    sh.style.transition = "none"; sh.style.transform = `translateY(${d}px)`;
+    $("scrim").style.opacity = String(Math.max(0.2, 1 - d / Math.max(200, sh.offsetHeight)));
+  }, { passive: false });
+  const finish = () => {
+    if (!live || !dragging) { live = false; return; }
+    live = false; dragging = false;
+    const v = dy / Math.max(1, performance.now() - t0); // px per ms
+    if (dy > Math.min(140, sh.offsetHeight * 0.3) || (v > 0.6 && dy > 40)) {
+      sh.style.transition = "transform .2s ease-in"; sh.style.transform = "translateY(100%)";
+      $("scrim").style.transition = "opacity .2s"; $("scrim").style.opacity = "0";
+      setTimeout(closeSheet, 200);
+    } else {
+      sh.style.transition = "transform .22s cubic-bezier(.2,.9,.3,1.2)"; sh.style.transform = "translateY(0)";
+      $("scrim").style.transition = "opacity .2s"; $("scrim").style.opacity = "";
+      setTimeout(resetSheetDrag, 240);
+    }
+  };
+  sh.addEventListener("touchend", finish);
+  sh.addEventListener("touchcancel", finish);
+})();
+
 $("scrim").onclick = () => {
   if (Date.now() - sheetOpenedAt < 700) return;
   if (voice.phase !== "recording" && voice.phase !== "transcribing") closeSheet();
@@ -1456,8 +1630,8 @@ function route() {
   // resets the scroll to the top: that was threads "jumping to the top"
   // every time you came back to Pocket from another app.
   const target = m ? "thread" : h === "#/new" ? "new" : h === "#/artifacts" ? "artifacts" : h.startsWith("#/tell") ? "tell"
-    : h === "#/shortcut" ? "shortcut" : h === "#/walk" ? "walk" : h === "#/drafts" ? "drafts" : "home";
-  for (const id of ["home", "thread", "new", "artifacts", "walk", "tell", "shortcut", "drafts"]) if ((id !== target) !== $(id).hidden) $(id).hidden = id !== target;
+    : h === "#/shortcut" ? "shortcut" : h === "#/walk" ? "walk" : h === "#/drafts" ? "drafts" : h === "#/draft-links" ? "draftlinks" : h === "#/notifications" ? "notifs" : h === "#/about" ? "about" : h === "#/conversations" ? "convos" : "home";
+  for (const id of ["home", "thread", "new", "artifacts", "walk", "tell", "shortcut", "drafts", "draftlinks", "notifs", "about", "convos"]) if ((id !== target) !== $(id).hidden) $(id).hidden = id !== target;
   $("dock").hidden = target !== "home";
   if (pillSend) { clearTimeout(pillSend.timer); pillSend.restore(); pillSend = null; $("pills").dataset.key = ""; }
   if (m) {
@@ -1499,9 +1673,21 @@ function route() {
   } else if (h === "#/drafts") {
     $("drafts").hidden = false;
     loadDrafts(true);
+  } else if (h === "#/draft-links") {
+    $("draftlinks").hidden = false;
+    loadDraftLinks();
   } else if (h === "#/shortcut") {
     $("shortcut").hidden = false;
     renderSetup();
+  } else if (h === "#/notifications") {
+    $("notifs").hidden = false;
+    loadNotifs();
+  } else if (h === "#/about") {
+    $("about").hidden = false;
+    loadAbout();
+  } else if (h === "#/conversations") {
+    $("convos").hidden = false;
+    loadConvos();
   } else if (h === "#/walk") {
     $("walk").hidden = false;
     renderWalk();
@@ -1518,9 +1704,34 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden && !r
 // Back pops history when we got here from the list; opened directly on a
 // view (a shared link, a home-screen resume), it goes to the list instead.
 let sawHome = false;
-document.querySelectorAll("[data-back]").forEach((b) => b.addEventListener("click", () => {
+function goBack() {
   if (sawHome) history.back(); else location.replace("#");
-}));
+}
+document.querySelectorAll("[data-back]").forEach((b) => b.addEventListener("click", goBack));
+// The iOS app's left-edge swipe calls this (bridge v1, see pocket-ios/BRIDGE.md).
+// It peels off what's on top first, like the back button would feel: file
+// viewer, sheet, artifacts tray; otherwise it goes back. Returns whether it did
+// anything, so the app only buzzes on a real back. Never while Walk is locked.
+// What a left-edge swipe would do right now, so the app can animate it:
+// "overlay" (a sheet, file viewer or tray closes), "page" (back to the list),
+// or "none". The app slides a snapshot card for "page" and calls pocketBack
+// underneath; if you let go early it restores location.hash itself.
+window.pocketBackKind = () => {
+  if (!$("pkWalkLock").hidden) return "none";
+  if (!$("pkFileView").hidden || !$("sheetWrap").hidden || !$("threadTray").hidden) return "overlay";
+  const h = location.hash;
+  return !h || h === "#" || h === "#/" ? "none" : "page";
+};
+window.pocketBack = () => {
+  if (!$("pkWalkLock").hidden) return false;
+  if (!$("pkFileView").hidden) { closeFileView(); return true; }
+  if (!$("sheetWrap").hidden) { closeSheet(); return true; }
+  if (!$("threadTray").hidden) { closeThreadTray(); return true; }
+  const h = location.hash;
+  if (!h || h === "#" || h === "#/") return false; // already on the list
+  goBack();
+  return true;
+};
 
 // ---------- home ----------
 async function loadHome() {
@@ -1528,7 +1739,7 @@ async function loadHome() {
   // separately so the thread list never waits on them.
   if (!state.draftsAt || Date.now() - state.draftsAt > 60000) {
     state.draftsAt = Date.now();
-    rpc("drafts", {}).then((d) => { state.drafts = d; if (!$("home").hidden && !state.swiping && state.home) renderHome(); }).catch(() => {});
+    rpc("drafts", { fresh: true }).then((d) => { state.drafts = d; if (!$("home").hidden && !state.swiping && state.home) renderHome(); }).catch(() => {});
   }
   try {
     state.home = await rpc("home");
@@ -1592,6 +1803,8 @@ function renderHome() {
     if (rest.length > shownRest.length) parts.push(`<button class="more" id="moreBtn">Show more</button>`);
   }
   parts.push(`<a class="setuplink" href="#/shortcut">Talk to bb from Siri or the Action Button →</a>`);
+  parts.push(`<a class="setuplink" href="#/notifications">Notifications →</a>`);
+  parts.push(`<a class="setuplink" href="#/about">About &amp; what's new →</a>`);
   $("lists").innerHTML = parts.join("");
   $("lists").querySelectorAll("li[data-id]").forEach(attachSwipe);
   $("lists").querySelectorAll("[data-rec]").forEach((b) => {
@@ -1606,10 +1819,20 @@ function renderHome() {
   if (more) more.onclick = () => { state.showAll = true; renderHome(); };
 
   // Walk needs the Talk to BB plugin; without it there's no button.
-  $("talkBtn").hidden = !state.home.walk && walk.phase === "idle";
+  const wphase = walkPhase();
+  $("talkBtn").hidden = !state.home.walk && wphase === "idle";
   // A Walk call keeps running while you look around; say so.
-  $("talkBtn").lastChild.textContent = walk.phase === "idle" ? "Walk" : "● Live";
-  $("talkBtn").style.color = walk.phase === "idle" ? "" : "var(--green)";
+  $("talkBtn").lastChild.textContent = wphase === "idle" ? "Walk" : "● Live";
+  $("talkBtn").style.color = wphase === "idle" ? "" : "var(--green)";
+  // Past voice conversations live in Talk to BB's notebook.
+  $("convBtn").hidden = !state.home.walk;
+  // Ambient Walk (iPhone app only): music plus spoken check-ins.
+  const canAmbient = !!window.pocketNative?.features?.includes?.("ambient");
+  $("ambientBtn").hidden = !canAmbient;
+  if (canAmbient) {
+    $("ambientBtn").lastChild.textContent = nativeAmbient.on ? "● Ambient" : "Ambient";
+    $("ambientBtn").style.color = nativeAmbient.on ? "var(--green)" : "";
+  }
   renderMachineLine();
   const n = state.home.newArtifacts;
   $("artBadge").hidden = !n;
@@ -1633,7 +1856,7 @@ function attachSwipe(li) {
     row.classList.remove("settle");
     // Long press (finger still for ~0.5 s): the row's menu.
     row.classList.add("rowhold");
-    hold = setTimeout(() => { row.classList.remove("rowhold"); tracking = false; swallowClick = true; rowMenu(id, !!li.dataset.needs); }, 500);
+    hold = setTimeout(() => { row.classList.remove("rowhold"); tracking = false; swallowClick = true; buzz("medium"); rowMenu(id, !!li.dataset.needs); }, 500);
   });
   row.addEventListener("pointerup", cancelHold);
   row.addEventListener("pointercancel", cancelHold);
@@ -1817,7 +2040,41 @@ async function togglePin(id) {
 
 $("newBtn").onclick = () => { location.hash = "#/new"; };
 $("artBtn").onclick = () => { location.hash = "#/artifacts"; };
-$("talkBtn").onclick = () => { location.hash = "#/walk"; };
+// Inside the Pocket iOS app, Walk runs natively (it keeps going on a locked
+// phone); the page only hands over the manager thread. See pocket-ios/BRIDGE.md.
+const nativeWalk = { phase: "idle", liveAt: 0 };
+const walkPhase = () => nativeWalk.phase !== "idle" ? nativeWalk.phase : walk.phase;
+// Ambient Walk runs in the app; the page only asks and shows its state. The app
+// confirms any switch between a live Walk and Ambient itself.
+const nativeAmbient = { on: false, nextCheckInAt: null, lastCheckIn: null };
+function startNativeWalk() {
+  const mgr = threadById(state.home?.managerId);
+  window.pocketNative.walk(mgr?.id || null, mgr?.projectId || null);
+}
+window.addEventListener("pocketnative", (e) => {
+  const m = e.detail || {};
+  if (m.type === "ambient-state") {
+    Object.assign(nativeAmbient, { on: !!m.on, nextCheckInAt: m.nextCheckInAt ?? null, lastCheckIn: m.lastCheckIn ?? null });
+    if (state.home) renderHome();
+    return;
+  }
+  if (m.type !== "walk-state") return;
+  nativeWalk.phase = m.phase || "idle";
+  nativeWalk.liveAt = m.liveAt || 0;
+  if (m.phase === "idle" && m.message) walkStatus(m.message);
+  if (state.home) renderHome();
+});
+$("convBtn").onclick = () => { location.hash = "#/conversations"; };
+$("talkBtn").onclick = () => { if (window.pocketNative?.available) startNativeWalk(); else location.hash = "#/walk"; };
+$("ambientBtn").onclick = () => {
+  if (!window.pocketNative?.features?.includes?.("ambient")) return;
+  if (nativeAmbient.on) {
+    if (confirm(`Stop Ambient Walk?${nativeAmbient.lastCheckIn ? `\n\nLast check-in: ${nativeAmbient.lastCheckIn}` : ""}`)) window.pocketNative.post({ type: "ambient", op: "stop" });
+  } else {
+    buzz("light");
+    window.pocketNative.post({ type: "ambient", op: "start" }); // the app asks first if a live Walk is running
+  }
+};
 
 // ---------- hold to talk ----------
 // Press: recording starts. Release: transcribe and review. Slide up onto the
@@ -1828,7 +2085,9 @@ const hold = { active: false, locked: false, released: false, starting: false, c
 // Safari has no vibrate(). Toggling a switch-style checkbox is the one haptic
 // it exposes (iOS 18+), and only while a finger is going down or lifting, so
 // call this synchronously from pointerdown/pointerup, never after an await.
-function buzz() {
+function buzz(kind = "light") {
+  // In the iOS app a real haptic works any time, even after an await.
+  if (window.pocketNative?.available) { window.pocketNative.haptic(kind); return; }
   try { if (navigator.vibrate) { navigator.vibrate(12); return; } } catch {}
   try {
     const label = document.createElement("label");
@@ -2785,14 +3044,20 @@ $("allSeen").onclick = async () => {
 // ---------- walk: a live Talk to BB session ----------
 // Pocket is only a phone front end for the Talk to BB plugin: same voice
 // socket, same tools, same limits. Its audio worklet does the PCM work.
-const walk = { phase: "idle", ws: null, ctx: null, stream: null, node: null, lock: null, captions: [], receipts: [], micOff: false, quiet: false, speakingTimer: 0, note: "" };
+// `talk` is the whole Walk's transcript: it runs on across a direct thread
+// line and a reconnect, and only a new Walk clears it (talk.js).
+const walk = { phase: "idle", ws: null, ctx: null, stream: null, node: null, lock: null, talk: PocketTalk.createWalkTranscript(), receipts: [], micOff: false, quiet: false, speakingTimer: 0, note: "", droppedAt: 0 };
+// Talk to BB continues a Walk whose connection dropped within 10 minutes.
+const WALK_CONTINUE_MS = 10 * 60_000;
+const speakerHtml = (r) => r.kind === "thread" && r.threadId ? `<button data-t="${esc(r.threadId)}">${esc(r.name)}</button>` : esc(r.name);
 
 function renderWalk() {
   const orb = $("worb");
-  orb.className = "worb" + (walk.phase === "live" ? (walk.micOff ? " paused" : " live") : "");
+  // Keep "speaking" through redraws (captions redraw often); only the audio gate sets it.
+  orb.className = "worb" + (walk.phase === "live" ? (walk.micOff ? " paused" : " live") : "") + (walk.speaking && walk.phase === "live" ? " speaking" : "");
   const c = $("walkControls");
   if (walk.phase === "idle") {
-    c.innerHTML = `<button class="btn primary" id="wStart">Start talking</button>`;
+    c.innerHTML = `<button class="btn primary" id="wStart">Start talking</button>${state.home?.walk ? `<a class="btn" href="#/conversations">Past talks</a>` : ""}`;
     $("wStart").onclick = startWalk;
   } else {
     c.innerHTML = `<button class="btn danger" id="wEnd">End</button><button class="btn" id="wMic" ${walk.phase !== "live" ? "disabled" : ""}>${walk.micOff ? "Unmute" : "Mute"}</button><button class="btn" id="wQuiet" ${walk.phase !== "live" ? "disabled" : ""}>${walk.quiet ? "Hear replies" : "Quiet"}</button><button class="btn" id="wLock" ${walk.phase !== "live" ? "disabled" : ""}>Lock</button>`;
@@ -2806,8 +3071,14 @@ function renderWalk() {
       renderWalk();
     };
   }
-  $("captions").innerHTML = walk.captions.slice(-12).map((c) => `<div class="cap ${c.speaker === "you" ? "you" : ""}"><b>${c.speaker === "you" ? "You" : "BB"}</b>${esc(c.text)}</div>`).join("");
-  $("captions").scrollTop = $("captions").scrollHeight;
+  // Scrolled up to reread? Stay there; otherwise follow the latest words.
+  const box = $("captions"), follow = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  box.innerHTML = walk.talk.rows.map((r) => r.kind === "switch" ? `<div class="capsw">${esc(r.text)}</div>`
+    : `<div class="cap k-${r.kind}"><b>${speakerHtml(r)}</b>${esc(r.text)}</div>`).join("");
+  box.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => { location.hash = `#/t/${b.dataset.t}`; });
+  if (follow) box.scrollTop = box.scrollHeight;
+  const voice = walk.talk.voice;
+  $("walk").querySelector(".bar .head .s").textContent = walk.phase !== "idle" && voice.kind === "thread" ? `On a line to ${voice.name}` : "Talk to BB, hands free";
   const r = $("receipts");
   r.hidden = !walk.receipts.length;
   r.innerHTML = walk.receipts.slice(0, 6).map((x) => `<button class="receipt" data-t="${x.threadId || ""}"><div>${esc(x.title)}</div><small>${esc(String(x.status || "").replaceAll("-", " "))}${x.detail ? ` · ${esc(x.detail)}` : ""}</small></button>`).join("");
@@ -2844,10 +3115,11 @@ function syncWalkLock() {
   const state = walk.phase !== "live" ? "idle" : speaking ? "speaking" : walk.micOff ? "paused" : "live";
   $("pkWlOrb").className = `pk-wlorb ${state}`;
   const st = $("walkStatus").textContent;
-  $("pkWlStatus").textContent = state === "speaking" ? (walk.quiet ? "BB is replying (quiet)" : "BB is talking")
+  const who = walk.talk.voice.name;
+  $("pkWlStatus").textContent = state === "speaking" ? (walk.quiet ? `${who} is replying (quiet)` : `${who} is talking`)
     : state === "paused" ? "Mic muted" : /Checking|limit|minute|didn't/i.test(st) ? st : "Listening";
-  const last = walk.captions[walk.captions.length - 1];
-  $("pkWlCap").textContent = last ? `${last.speaker === "you" ? "You" : "BB"}: ${last.text.trim().slice(-220)}` : "";
+  const last = walk.talk.rows.filter((r) => r.kind !== "switch").pop();
+  $("pkWlCap").textContent = last ? `${last.name}: ${last.text.trim().slice(-220)}` : "";
 }
 // The orb's speaking flicker comes from the audio stream; mirror it without touching that path.
 new MutationObserver(syncWalkLock).observe($("worb"), { attributes: true, attributeFilter: ["class"] });
@@ -2881,16 +3153,19 @@ function resetHold() {
 function walkStatus(text) { $("walkStatus").textContent = text; syncWalkLock(); }
 function walkSend(obj) { if (walk.ws?.readyState === 1) walk.ws.send(JSON.stringify(obj)); }
 function caption(speaker, text) {
-  const last = walk.captions[walk.captions.length - 1];
-  if (last?.speaker === speaker) last.text += text; else walk.captions.push({ speaker, text });
-  if (walk.captions.length > 100) walk.captions.shift();
+  walk.talk.transcript({ speaker, text });
   renderWalk();
 }
 
 async function startWalk() {
+  if (window.pocketNative?.available) return startNativeWalk(); // native Walk; never open a second mic or socket
   recorder.closeMic(); // Walk opens its own mic; don't hold two
   audioSession("play-and-record");
-  walk.phase = "connecting"; walk.captions = []; walk.receipts = []; walk.micOff = false; walk.quiet = false;
+  // A reconnect after a dropped connection is the same Walk: keep what was said.
+  const continued = !!walk.droppedAt && Date.now() - walk.droppedAt < WALK_CONTINUE_MS;
+  walk.talk.start({ continued });
+  if (!continued) { walk.receipts = []; walk.liveAt = 0; }
+  walk.phase = "connecting"; walk.droppedAt = 0; walk.micOff = false; walk.quiet = false;
   renderWalk();
   walkStatus("Checking Talk to BB…");
   // iOS only lets audio start inside the tap. The context used to be made
@@ -2946,16 +3221,33 @@ async function startWalk() {
     ws.onmessage = ({ data }) => {
       if (data instanceof ArrayBuffer) {
         walk.trace.heard += data.byteLength;
+        // Talk to BB streams audio for nearly the whole call, silence included
+        // (9/27: 92-98% of each session), so only an audible chunk means BB is
+        // talking (RMS >= 0.008, about -42 dBFS; same gate as the iOS app).
+        // Measure before the buffer is handed to the worklet.
+        const pcm = new Int16Array(data);
+        let sum = 0;
+        for (let i = 0; i < pcm.length; i++) sum += pcm[i] * pcm[i];
+        const audible = pcm.length > 0 && Math.sqrt(sum / pcm.length) / 32768 >= 0.008;
         if (!walk.quiet) node.port.postMessage({ type: "audio", buffer: data }, [data]);
-        $("worb").classList.add("speaking");
-        clearTimeout(walk.speakingTimer);
-        walk.speakingTimer = setTimeout(() => $("worb").classList.remove("speaking"), 450);
+        if (audible) {
+          walk.speaking = true;
+          $("worb").classList.add("speaking");
+          clearTimeout(walk.speakingTimer);
+          walk.speakingTimer = setTimeout(() => { walk.speaking = false; $("worb").classList.remove("speaking"); }, 1450);
+        }
         return;
       }
       const e = JSON.parse(data);
-      if (e.type === "ready") { mark("ready"); ready = true; walk.liveAt = Date.now(); clearTimeout(giveUp); walk.phase = "live"; walkStatus("Listening. Talk whenever you like."); renderWalk(); keepAwake(); }
+      // A thread line, and the manager coming back after one, each send ready
+      // again mid-call: the clock and the status line carry on.
+      if (e.type === "ready") {
+        if (walk.phase !== "live") { mark("ready"); walk.phase = "live"; walk.liveAt ||= Date.now(); walkStatus("Listening. Talk whenever you like."); keepAwake(); }
+        ready = true; clearTimeout(giveUp); renderWalk();
+      }
+      if (e.type === "leg") { const line = walk.talk.leg(e); if (line) walkStatus(line); renderWalk(); }
       if (e.type === "transcript") caption(e.speaker, e.text);
-      if (e.type === "flush") node.port.postMessage({ type: "flush" });
+      if (e.type === "flush") { node.port.postMessage({ type: "flush" }); clearTimeout(walk.speakingTimer); walk.speaking = false; $("worb").classList.remove("speaking"); }
       if (e.type === "playback") { walk.quiet = !e.enabled; renderWalk(); }
       if (e.type === "notice" && e.text) walkStatus(e.text);
       if (e.type === "lookup") walkStatus(e.state === "reading" ? "Checking BB…" : e.state === "failed" ? "That lookup didn't finish." : "Listening.");
@@ -2974,14 +3266,17 @@ async function startWalk() {
       if (e.type === "fault") endWalk(e.message);
       if (e.type === "closed") endWalk(e.reason === "time-limit" ? `Twenty-minute limit reached. Anything unfinished carries into your next session.` : `Session ended (${Math.round(e.seconds || 0)} seconds).`);
     };
-    ws.onerror = () => { walk.trace.wsError = true; endWalk("Couldn't connect to Talk to BB."); };
-    ws.onclose = (ev) => { if (walk.trace) walk.trace.closeCode = ev.code; if (walk.phase !== "idle") endWalk(ev.code === 1000 ? "Session ended." : `Connection dropped (${ev.code}).`); };
+    ws.onerror = () => { walk.trace.wsError = true; const live = walk.phase === "live"; endWalk(live ? "Connection dropped. Start again to carry on." : "Couldn't connect to Talk to BB.", { dropped: live }); };
+    ws.onclose = (ev) => { if (walk.trace) walk.trace.closeCode = ev.code; if (walk.phase !== "idle") endWalk(ev.code === 1000 ? "Session ended." : `Connection dropped (${ev.code}). Start again to carry on.`, { dropped: ev.code !== 1000 && walk.phase === "live" }); };
   } catch (e) {
     endWalk(micError(e));
   }
 }
 
-function endWalk(message) {
+// `dropped`: the connection was lost mid-call, so the next Start carries the
+// same Walk (and its transcript) on.
+function endWalk(message, { dropped = false } = {}) {
+  walk.droppedAt = dropped ? Date.now() : 0;
   unlockWalk();
   // One line per session so a failure on the phone can be read on the server.
   if (walk.trace) {
@@ -2997,7 +3292,8 @@ function endWalk(message) {
   try { w.node?.disconnect(); } catch {}
   w.ctx?.close().catch(() => {});
   w.lock?.release?.().catch?.(() => {});
-  Object.assign(w, { phase: "idle", ws: null, ctx: null, stream: null, node: null, lock: null });
+  clearTimeout(w.speakingTimer);
+  Object.assign(w, { phase: "idle", ws: null, ctx: null, stream: null, node: null, lock: null, speaking: false });
   walkStatus(message);
   renderWalk();
 }
@@ -3008,6 +3304,240 @@ async function keepAwake() {
 }
 document.addEventListener("visibilitychange", () => { if (!document.hidden && walk.phase === "live" && !walk.lock) keepAwake(); });
 window.addEventListener("pagehide", () => { if (walk.phase !== "idle") endWalk("Session ended."); });
+
+// ---------- conversations: Talk to BB's notebook ----------
+// Every voice conversation (Walk, Hey BB, check-ins, the desk panel), newest
+// first. Read straight from Talk to BB's notebook RPC, like Walk's status
+// check. A thread that spoke on a direct line is named and opens in Pocket.
+const convo = { list: null, open: new Set(), detail: new Map(), error: "" };
+const ACTION_VERB = { bb_tell_thread: "Sent to thread", bb_spawn_thread: "Started a thread", bb_stop_thread: "Stopped a thread", bb_focus_thread: "Brought up", bb_steer_thread: "Steered a thread" };
+const titleOfThread = (id) => threadById(id)?.title || null;
+
+async function loadConvos() {
+  if (!convo.list) $("convList").innerHTML = `<div class="fail">Loading conversations…</div>`;
+  try {
+    const r = await rpc("notebook", { op: "list", limit: 100 }, `${TALK}/rpc/`);
+    convo.list = r.sessions || []; convo.error = "";
+    // Anything open that's still being recorded may have grown.
+    await Promise.all([...convo.open].map((id) => convo.list.find((x) => x.id === id && !x.endedAt) ? fetchConvo(id) : null));
+  } catch (e) {
+    convo.error = /notebook|not found|404/i.test(e.message)
+      ? "This server's Talk to BB doesn't keep conversations yet. Update Talk to BB."
+      : `Couldn't load conversations. ${e.message}`;
+  }
+  if (location.hash === "#/conversations") renderConvos();
+}
+
+async function fetchConvo(id) {
+  try { convo.detail.set(id, (await rpc("notebook", { op: "get", id }, `${TALK}/rpc/`)).session || { missing: true }); }
+  catch (e) { convo.detail.set(id, { error: e.message }); }
+}
+
+function convoRow(x) {
+  const at = Date.parse(x.startedAt) || 0;
+  const bits = [`<span class="stag s-${esc(x.surface)}">${esc(PocketTalk.surfaceTag(x.surface))}</span>`,
+    `<span>${esc(new Date(at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }))}</span>`];
+  if (!x.endedAt) bits.push(`<span class="live">● Live</span>`);
+  else if (x.seconds) bits.push(`<span>· ${esc(PocketTalk.duration(x.seconds))}</span>`);
+  if (x.actionCount) bits.push(`<span>· ${x.actionCount} action${x.actionCount === 1 ? "" : "s"}</span>`);
+  if (x.noteCount) bits.push(`<span>· ${x.noteCount} note${x.noteCount === 1 ? "" : "s"}</span>`);
+  const open = convo.open.has(x.id);
+  return `<div class="conv" data-id="${esc(x.id)}"><button aria-expanded="${open}"><div class="cm">${bits.join("")}</div>
+    <div class="cp ${x.preview ? "" : "none"}">${esc(x.preview || "Nothing was said.")}</div></button>${open ? `<div class="copen">${convoBody(x.id)}</div>` : ""}</div>`;
+}
+
+function convoBody(id) {
+  const d = convo.detail.get(id);
+  if (!d) return `<p class="hint" style="margin:0">Loading…</p>`;
+  if (d.error) return `<p class="hint" style="margin:0">Couldn't load this one. ${esc(d.error)}</p>`;
+  if (d.missing) return `<p class="hint" style="margin:0">This conversation is no longer kept.</p>`;
+  const html = [];
+  let prev = null;
+  for (const t of d.turns || []) {
+    const who = PocketTalk.turnSpeaker(t, { titleOf: titleOfThread });
+    // A direct line starting or ending gets a divider, as on the Walk screen.
+    if (prev && prev.kind !== "you" && who.kind !== "you" && (prev.kind !== who.kind || prev.threadId !== who.threadId))
+      html.push(`<div class="capsw">${who.kind === "thread" ? `Talking to ${esc(who.name)}` : "Back with BB"}</div>`);
+    if (who.kind !== "you") prev = who;
+    const tags = [t.typed ? "typed" : "", t.noteId && !t.noteDeleted ? "saved as a note" : ""].filter(Boolean);
+    html.push(`<div class="cturn k-${who.kind}"><b>${speakerHtml(who)}${tags.length ? `<span class="tag"> · ${tags.join(" · ")}</span>` : ""}</b>${esc(String(t.text ?? "").trim())}</div>`);
+  }
+  if (!d.turns?.length) html.push(`<p class="hint" style="margin:0">Nothing was said.</p>`);
+  if (d.truncated) html.push(`<p class="hint" style="margin:0 0 8px">The rest was too long to keep.</p>`);
+  if (d.actions?.length) {
+    html.push(`<div class="cacts"><h3>What BB did</h3>${d.actions.map((a) => {
+      const verb = ACTION_VERB[a.kind] || String(a.kind || "Action").replace(/^bb_/, "").replaceAll("_", " ");
+      const status = String(a.status || "").replaceAll("-", " ");
+      return a.threadId
+        ? `<button class="cact link" data-t="${esc(a.threadId)}"><div>${esc(a.title || titleOfThread(a.threadId) || "Thread")}</div><small>${esc(verb)}${status ? ` · ${esc(status)}` : ""}</small></button>`
+        : `<div class="cact"><div>${esc(a.title || verb)}</div><small>${esc(verb)}${status ? ` · ${esc(status)}` : ""}</small></div>`;
+    }).join("")}</div>`);
+  }
+  if (d.notes?.length) {
+    html.push(`<div class="cnotes"><h3>Notes</h3>${d.notes.map((n) => n.deleted ? `<p class="gone">A note, since deleted</p>`
+      : `<p>${esc(n.text || n.body || n.title || "A note")}</p>`).join("")}</div>`);
+  }
+  return html.join("");
+}
+
+function renderConvos() {
+  const list = $("convList");
+  if (!convo.list) { list.innerHTML = `<div class="fail">${esc(convo.error || "Loading conversations…")}</div>`; return; }
+  const html = [];
+  if (convo.error) html.push(`<div class="fail">${esc(convo.error)}</div>`);
+  const groups = PocketTalk.groupByDay(convo.list, dayLabel);
+  for (const g of groups) html.push(`<h2 class="section">${esc(g.label)}</h2>${g.sessions.map(convoRow).join("")}`);
+  if (!groups.length) html.push(`<div class="fail">No conversations in the last 30 days. Walk, Hey BB and check-ins show up here.</div>`);
+  list.innerHTML = html.join("");
+  list.querySelectorAll(".conv > button").forEach((b) => b.onclick = async () => {
+    const id = b.parentElement.dataset.id;
+    if (convo.open.has(id)) { convo.open.delete(id); renderConvos(); return; }
+    convo.open.add(id);
+    renderConvos();
+    const row = convo.list.find((x) => x.id === id);
+    if (!convo.detail.has(id) || !row?.endedAt) { await fetchConvo(id); renderConvos(); }
+  });
+  list.querySelectorAll("[data-t]").forEach((b) => b.onclick = (e) => { e.stopPropagation(); location.hash = `#/t/${b.dataset.t}`; });
+}
+
+// ---------- about & what's new ----------
+// Two things update separately: this page and Pocket's server (live as soon as
+// bb reloads the plugin) and the iPhone app (needs an install). The app reports
+// its installed build over the bridge; its CHANGELOG.md says what each build
+// holds, so this screen can show "on your phone" vs "built, not installed yet".
+function parseIosChangelog(md) {
+  const out = { planned: [], builds: [] };
+  let cur = null;
+  for (const raw of String(md || "").split("\n")) {
+    const line = raw.trim();
+    const h = line.match(/^##\s+(.*)$/);
+    if (h) {
+      const b = h[1].match(/^Build\s+(\d+)\s*(?:[·•-]\s*(\S+))?/i);
+      cur = /^planned\b/i.test(h[1]) ? { planned: true } : b ? { build: b[1], version: b[2] || "", items: [], installed: null } : null;
+      if (cur?.build) out.builds.push(cur);
+      continue;
+    }
+    if (!cur) continue;
+    const inst = line.match(/^\*?installed on .*?:\s*(yes|not yet|no)\*?$/i);
+    if (inst && cur.build) { cur.installed = /yes/i.test(inst[1]); continue; }
+    const item = line.match(/^[-*]\s+(.*)$/);
+    if (item) (cur.planned ? out.planned : cur.items).push(item[1]);
+  }
+  out.builds.sort((a, b) => (b.build > a.build ? 1 : b.build < a.build ? -1 : 0));
+  return out;
+}
+async function loadAbout() {
+  const body = $("aboutBody");
+  body.innerHTML = `<p>Loading…</p>`;
+  let r;
+  try { r = await rpc("about", null); } catch (e) { body.innerHTML = `<p class="fail">Couldn't load (${esc(e.message)}).</p>`; return; }
+  const app = window.pocketNative?.app || null;
+  const ios = r.iosChangelog ? parseIosChangelog(r.iosChangelog) : null;
+  const list = (items) => items.length ? `<ul class="pk-ablist">${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
+  const parts = [];
+  // The versions you're on.
+  parts.push(`<div class="pk-abcard"><b>Pocket ${esc(r.pocketVersion)}</b><small>Pages and server. Updates reach you without installing anything.</small></div>`);
+  if (app) parts.push(`<div class="pk-abcard"><b>iPhone app ${esc(app.version || "?")}</b><small>Build ${esc(app.build || "?")} is on this phone.</small></div>`);
+  else if (window.pocketNative?.available) parts.push(`<div class="pk-abcard"><b>iPhone app</b><small>This app build is too old to report its version. The next install will.</small></div>`);
+  else parts.push(`<div class="pk-abcard"><b>iPhone app</b><small>Open this screen in the Pocket iPhone app to see which build you have.</small></div>`);
+  if (ios) {
+    const mine = app?.build || null;
+    const newer = mine ? ios.builds.filter((b) => b.build > mine) : ios.builds.filter((b) => b.installed === false);
+    const current = mine ? ios.builds.find((b) => b.build === mine) : ios.builds.find((b) => b.installed);
+    const older = ios.builds.filter((b) => b !== current && !newer.includes(b));
+    if (newer.length) {
+      parts.push(`<div class="pk-abcard pk-abnew"><b>Built, not on your phone yet</b><small>${newer.length === 1 ? "One newer build is" : `${newer.length} newer builds are`} ready. Install from Xcode (▶ Run), or ask for it to be installed.</small>${newer.map((b) => `<small style="margin-top:8px">Build ${esc(b.build)}${b.version ? ` · ${esc(b.version)}` : ""}</small>${list(b.items)}`).join("")}</div>`);
+    }
+    if (current) parts.push(`<h3>On your phone${current.version ? ` · ${esc(current.version)}` : ""}</h3>${list(current.items)}`);
+    if (ios.planned.length) parts.push(`<h3>Coming next</h3>${list(ios.planned)}`);
+    if (older.length) parts.push(`<details><summary>Earlier app builds (${older.length})</summary>${older.map((b) => `<p style="margin:10px 0 0"><b>Build ${esc(b.build)}${b.version ? ` · ${esc(b.version)}` : ""}</b></p>${list(b.items)}`).join("")}</details>`);
+  }
+  if (r.pocketChangelog) {
+    // Only the newest few Pocket entries up front.
+    const sections = r.pocketChangelog.split(/\n(?=## )/).slice(1);
+    const intro = `<h3>Pocket updates</h3><p style="margin:0">Live already, no install needed.</p>`;
+    parts.push(`${intro}<div class="pk-abmd md">${md(sections.slice(0, 4).join("\n"))}</div>`);
+    if (sections.length > 4) parts.push(`<details><summary>Earlier Pocket updates</summary><div class="pk-abmd md">${md(sections.slice(4).join("\n"))}</div></details>`);
+  }
+  body.innerHTML = parts.join("");
+}
+
+// ---------- notifications screen ----------
+// What the Pocket iPhone app will notify about, quiet hours, the phones that
+// registered, and a safe test (no thread, no buttons). Push itself is switched
+// on on the bb server; until there's an Apple key everything is a practice
+// run that only logs what it would send.
+const nt = { status: null, saveTimer: 0, result: "" };
+const NT_KINDS = [
+  ["approval", "Approvals", "An agent wants permission to do something"],
+  ["question", "Questions", "An agent asks you to pick an option"],
+  ["reply", "Your turn", "An agent finished and is waiting on you"],
+];
+async function loadNotifs() {
+  if (!nt.status) $("notifsBody").innerHTML = `<p>Loading…</p>`;
+  try { nt.status = await rpc("notifyStatus", null); renderNotifs(); }
+  catch (e) { $("notifsBody").innerHTML = `<p class="fail">Couldn't load notification settings (${esc(e.message)}).</p>`; }
+}
+function ntStatusCard(st) {
+  if (st.serverOn && !st.dryRun) return `<div class="pk-ntstatus live"><b>On</b><span>Notifications go to the phones below.</span></div>`;
+  if (st.serverOn) return `<div class="pk-ntstatus practice"><b>Practice mode</b><span>Nothing is sent yet: Pocket only logs what it would send. ${st.keyReady ? "Dry run is switched on in Pocket's settings." : "It needs an Apple push key, which comes with your paid Apple Developer membership."}</span></div>`;
+  return `<div class="pk-ntstatus"><b>Off</b><span>Notifications are switched off on your bb server${st.keyReady ? "" : ", and they need an Apple push key first (it comes with a paid Apple Developer membership)"}. Your settings here still save.</span></div>`;
+}
+function renderNotifs() {
+  const st = nt.status;
+  if (!st) return;
+  const p = st.prefs;
+  const ago = (ms) => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || p.quiet.tz;
+  $("notifsBody").innerHTML = `
+    ${ntStatusCard(st)}
+    <h3>Notify me about</h3>
+    ${NT_KINDS.map(([k, name, what]) => `<div class="pk-ntrow"><div class="pk-nttext"><div>${name}</div><small>${what}</small></div><input type="checkbox" switch data-kind="${k}" ${p.kinds[k] ? "checked" : ""} aria-label="${name}"></div>`).join("")}
+    <h3>Quiet hours</h3>
+    <div class="pk-ntrow"><div class="pk-nttext"><div>Quiet hours</div><small>${st.quietNow ? "On now: " : ""}notifications arrive silently, and everything still waits in Needs you</small></div><input type="checkbox" switch id="ntQuiet" ${p.quiet.on ? "checked" : ""} aria-label="Quiet hours"></div>
+    <div class="pk-nttimes" id="ntTimes" ${p.quiet.on ? "" : "hidden"}>
+      <label>From<input type="time" id="ntStart" value="${esc(p.quiet.start)}"></label>
+      <label>To<input type="time" id="ntEnd" value="${esc(p.quiet.end)}"></label>
+    </div>
+    <p style="font-size:13px;margin:0">Times are in ${esc(zone)}.</p>
+    <h3>Phones</h3>
+    ${st.devices.length ? st.devices.map((d) => `<div class="pk-ntdev"><div class="pk-nttext">iPhone ending …${esc(d.id)}<small>${d.env === "production" ? "App Store / TestFlight build" : "Development build"} · last seen ${ago(d.lastSeen)}${d.matches ? "" : " · a different app"}</small></div><button data-forget="${esc(d.id)}">Forget</button></div>`).join("")
+      : `<p>No phones yet. Open the Pocket iPhone app while signed in, and allow notifications when it asks.</p>`}
+    <h3>Test</h3>
+    <p style="margin:0">Sends a test notification to the phones above. It isn't about any thread and has no buttons, so it can't do anything.</p>
+    <button class="btn pk-nttest" id="ntTest">Send test notification</button>
+    <div class="pk-ntresult" id="ntResult">${nt.result}</div>`;
+  $("notifsBody").querySelectorAll("[data-kind]").forEach((c) => c.onchange = () => { st.prefs.kinds[c.dataset.kind] = c.checked; buzz("light"); saveNotifs(); });
+  $("ntQuiet").onchange = () => { st.prefs.quiet.on = $("ntQuiet").checked; $("ntTimes").hidden = !st.prefs.quiet.on; buzz("light"); saveNotifs(); };
+  for (const id of ["ntStart", "ntEnd"]) $(id).onchange = () => { if ($(id).value) { st.prefs.quiet[id === "ntStart" ? "start" : "end"] = $(id).value.slice(0, 5); saveNotifs(); } };
+  $("notifsBody").querySelectorAll("[data-forget]").forEach((b) => b.onclick = async () => {
+    if (!confirm(`Stop notifications to the iPhone ending …${b.dataset.forget}? It registers again next time the app opens.`)) return;
+    try { await rpc("forgetDevice", { id: b.dataset.forget }); await loadNotifs(); } catch (e) { toast(e.message); }
+  });
+  $("ntTest").onclick = testNotif;
+}
+function saveNotifs() {
+  clearTimeout(nt.saveTimer);
+  nt.saveTimer = setTimeout(async () => {
+    const p = nt.status.prefs;
+    p.quiet.tz = Intl.DateTimeFormat().resolvedOptions().timeZone || p.quiet.tz;
+    try { await rpc("setNotifyPrefs", p); toast("Saved"); const fresh = await rpc("notifyStatus", null); nt.status.quietNow = fresh.quietNow; }
+    catch (e) { toast(`Couldn't save (${e.message})`); loadNotifs(); }
+  }, 350);
+}
+async function testNotif() {
+  const b = $("ntTest");
+  b.disabled = true;
+  try {
+    const r = await rpc("testNotification", null);
+    const n = r.devices;
+    nt.result = r.dryRun
+      ? `<b>Practice run:</b> it would go to ${n === 1 ? "1 phone" : `${n} phones`}. Nothing was sent. This is what would be sent:<pre>${esc(r.payload)}</pre>`
+      : `Sent to ${n === 1 ? "1 phone" : `${n} phones`}: ${r.results.map((x) => `…${esc(x.device.replace(/^…/, ""))} ${x.status === 200 ? "delivered to Apple" : esc(`${x.status} ${x.reason || ""}`)}`).join(", ") || "no phones registered"}.`;
+    $("ntResult").innerHTML = nt.result;
+  } catch (e) { toast(e.message); }
+  finally { b.disabled = false; }
+}
 
 // ---------- drafts ----------
 const WEEK = 7 * 86400000;
@@ -3031,11 +3561,22 @@ async function loadDrafts(fresh) {
   catch (e) { if (!state.drafts) $("draftList").innerHTML = `<div class="fail">Couldn't load drafts.<br>${esc(e.message)}</div>`; }
 }
 
-// The Gmail app has no link to a draft or even the Drafts folder (its scheme
-// only opens the app or a blank compose), so on a phone the button opens the
-// app and says where the draft is; on a computer it opens the draft itself.
+// On a computer the button opens the draft itself (it needs the hex message id;
+// the r-… draft id opens nothing). The Gmail app has no documented link to a
+// draft: "app" just opens it and says where the draft is, and the others are
+// candidates you try once on #/draft-links and keep the one that lands on the
+// draft. None composes (googlegmail:///co would make a second copy).
 const isPhone = /iPhone|iPad|Android/.test(navigator.userAgent);
-const gmailUrl = (hex) => isPhone ? "googlegmail://" : `https://mail.google.com/mail/u/0/#drafts?compose=${encodeURIComponent(hex)}`;
+const GMAIL_LINKS = [
+  { key: "app", name: "Gmail app, as today", what: "Opens the app wherever it was. Always works; you find the draft in Drafts.", url: () => "googlegmail://" },
+  { key: "cv0", name: "App: this conversation, first account", what: "The draft's thread, account 0.", url: (x) => `googlegmail:///cv=${x.threadId}/accountId=0` },
+  { key: "cv1", name: "App: this conversation, second account", what: "The same, account 1 (the order of accounts in the app).", url: (x) => `googlegmail:///cv=${x.threadId}/accountId=1` },
+  { key: "cvMail", name: "App: this conversation, by address", what: "The same, naming the account by its address.", url: (x, d) => d.account ? `googlegmail:///cv=${x.threadId}/accountId=${encodeURIComponent(d.account)}` : null },
+  { key: "tlDrafts", name: "App: Drafts folder", what: "Just the Drafts list, if the app knows this link.", url: () => "googlegmail:///tl=%5Er" },
+  { key: "mweb", name: "Safari: Gmail on the web", what: "Opens the draft's thread in Gmail's mobile site, not the app.", url: (x, d) => `https://mail.google.com/mail/mu/mp/${d.account ? `?authuser=${encodeURIComponent(d.account)}` : ""}#cv/Drafts/${x.threadId}` },
+];
+const gmailLink = (key) => GMAIL_LINKS.find((l) => l.key === key) || GMAIL_LINKS[0];
+const gmailUrl = (x) => isPhone ? (gmailLink(state.drafts.gmailLink).url(x, state.drafts) || "googlegmail://") : `https://mail.google.com/mail/u/0/#drafts?compose=${encodeURIComponent(x.hexId)}`;
 const slackUrl = (team, ch) => `slack://channel?team=${encodeURIComponent(team || "")}&id=${encodeURIComponent(ch)}`;
 
 function renderDrafts() {
@@ -3053,7 +3594,7 @@ function renderDrafts() {
   if (d.gmailError) html.push(`<div class="fail">Gmail didn't answer: ${esc(d.gmailError)}</div>`);
   html.push(fresh.length ? fresh.map(row).join("") : `<div class="fail">Nothing waiting from the last week.</div>`);
   if (old.length) html.push(`<details class="olderdrafts"><summary>${old.length} older than a week ›</summary>${old.map(row).join("")}</details>`);
-  html.push(`<p class="hint" style="margin:18px 20px">Slack drafts come from the draft log set in Pocket's settings, and disappear once you've sent them.</p>`);
+  html.push(`<p class="hint" style="margin:18px 20px">Gmail drafts you send or delete disappear here within a minute. Slack drafts disappear once you send them (edited or not) and after 3 days; Slack doesn't tell Pocket when you delete one, so remove it here.</p>`);
   $("draftList").innerHTML = html.join("");
   $("draftList").querySelectorAll(".draft > button").forEach((b) => b.onclick = () => toggleDraft(b.parentElement));
   // Keep any draft you had open, open.
@@ -3075,15 +3616,27 @@ async function toggleDraft(el) {
   if (el.dataset.k) {
     const x = state.drafts.slack.find((s) => s.key === el.dataset.k);
     box.innerHTML = `<div class="body">${esc(x.text)}</div>
-      <div class="btns"><button class="btn" data-hide>Hide</button><a class="btn primary" href="${slackUrl(state.drafts.teamId, x.channel)}">Open in Slack</a></div>`;
+      <div class="btns"><button class="btn" data-hide>Remove</button><a class="btn primary" href="${slackUrl(state.drafts.teamId, x.channel)}">Open in Slack</a></div>
+      <p class="hint" style="margin:8px 0 0">Deleted it in Slack? Remove it here: Slack doesn't tell Pocket.</p>`;
   } else {
     box.innerHTML = `<div class="body">Loading…</div>`;
     try {
       const b = await rpc("draftBody", { id: el.dataset.g });
+      const x = state.drafts.gmail.find((g) => g.hexId === el.dataset.hex) || { hexId: el.dataset.hex, threadId: el.dataset.hex };
+      const link = gmailLink(state.drafts.gmailLink);
       box.innerHTML = `<div class="hdr">To ${esc(b.to)}${b.cc ? `<br>Cc ${esc(b.cc)}` : ""}</div><div class="body">${esc(b.body || "(empty)")}</div>
-        <div class="btns"><button class="btn" data-hide>Hide</button><a class="btn primary" href="${gmailUrl(el.dataset.hex)}" ${isPhone ? "" : `target="_blank" rel="noopener"`}>Open Gmail</a></div>
-        ${isPhone ? `<p class="hint" style="margin:8px 0 0">Opens the Gmail app. It's in Drafts${b.subject ? `, "${esc(b.subject.slice(0, 60))}"` : ""}.</p>` : ""}`;
-    } catch (e) { box.innerHTML = `<div class="body">${esc(e.message)}</div>`; }
+        <div class="btns"><button class="btn" data-hide>Hide</button><a class="btn primary" href="${esc(gmailUrl(x))}" ${isPhone ? "" : `target="_blank" rel="noopener"`}>Open Gmail</a></div>
+        ${!isPhone ? "" : link.key === "app"
+          ? `<p class="hint" style="margin:8px 0 0">Opens the Gmail app. It's in Drafts${b.subject ? `, "${esc(b.subject.slice(0, 60))}"` : ""}. <a href="#/draft-links">Try links that go straight to it</a></p>`
+          : `<p class="hint" style="margin:8px 0 0">${esc(link.name)}${b.subject ? `: "${esc(b.subject.slice(0, 60))}"` : ""}. <a href="#/draft-links">Change</a></p>`}`;
+    } catch (e) {
+      // Sent or deleted since the list loaded: say so and drop it.
+      if (/not ?found|404/i.test(e.message)) {
+        box.innerHTML = `<div class="body">This draft is gone from Gmail: it was sent or deleted.</div>`;
+        state.openDrafts.delete(key);
+        setTimeout(() => loadDrafts(true), 1500);
+      } else box.innerHTML = `<div class="body">${esc(e.message)}</div>`;
+    }
   }
   const hide = box.querySelector("[data-hide]");
   if (hide) hide.onclick = async () => {
@@ -3091,9 +3644,41 @@ async function toggleDraft(el) {
     el.remove();
     state.drafts.gmail = state.drafts.gmail.filter((g) => g.hexId !== key);
     state.drafts.slack = state.drafts.slack.filter((s) => s.key !== key);
-    toast("Hidden from Pocket. It's still in Gmail or Slack.");
+    toast(el.dataset.k ? "Removed from Pocket. If it's still in Slack, it stays there." : "Hidden from Pocket. It's still in Gmail.");
     try { await rpc("dismissDraft", { key }); } catch {}
   };
+}
+
+// ---------- Gmail draft links (#/draft-links) ----------
+// Only the phone can tell which link lands on a draft: one real draft, every
+// candidate link, and a button to keep the one that worked. Opening a link
+// never sends or creates mail.
+async function loadDraftLinks() {
+  try {
+    const d = await rpc("drafts", { fresh: true });
+    state.drafts = d;
+    renderDraftLinks();
+  } catch (e) { $("draftLinksBody").innerHTML = `<p class="fail">Couldn't load drafts (${esc(e.message)}).</p>`; }
+}
+function renderDraftLinks() {
+  const d = state.drafts;
+  const body = $("draftLinksBody");
+  if (!d.gmail.length) { body.innerHTML = `<p>${d.gmailError ? `Gmail didn't answer: ${esc(d.gmailError)}` : "No Gmail drafts right now. This needs one to try the links on."}</p>`; return; }
+  const x = d.gmail.find((g) => g.hexId === state.linkDraft) || d.gmail[0];
+  const reply = x.threadId !== x.hexId;
+  body.innerHTML = `
+    <p>Tap a link, see where Gmail lands, come back. If it opened <b>this draft</b>, tap <b>Use this one</b> and Pocket will open drafts that way. None of these can send or create mail.</p>
+    <h3>Draft to try</h3>
+    <select id="dlPick" style="width:100%;font-size:15px;padding:8px">${d.gmail.map((g) => `<option value="${esc(g.hexId)}" ${g === x ? "selected" : ""}>${esc(g.subject)} (${esc(g.to)})</option>`).join("")}</select>
+    <p style="font-size:13px">${reply ? "A reply in an existing thread" : "A new message (its own thread)"}${d.account ? ` · ${esc(d.account)}` : ""}. It's worth trying one of each kind.</p>
+    <h3>Links</h3>
+    ${GMAIL_LINKS.map((l) => { const u = l.url(x, d); return u ? `<div class="dlink${l.key === d.gmailLink ? " picked" : ""}"><div class="t">${esc(l.name)}${l.key === d.gmailLink ? " · in use" : ""}</div><p style="margin:2px 0;font-size:14px">${esc(l.what)}</p><div class="urlbox">${esc(u)}</div>
+      <div class="btns"><a class="btn primary" href="${esc(u)}">Open</a>${l.key === d.gmailLink ? "" : `<button class="btn" data-use="${l.key}">Use this one</button>`}</div></div>` : ""; }).join("")}`;
+  $("dlPick").onchange = () => { state.linkDraft = $("dlPick").value; renderDraftLinks(); };
+  body.querySelectorAll("[data-use]").forEach((b) => b.onclick = async () => {
+    try { await rpc("setGmailLink", { style: b.dataset.use }); d.gmailLink = b.dataset.use; buzz("light"); toast(`Drafts open with “${gmailLink(b.dataset.use).name}”.`); renderDraftLinks(); }
+    catch (e) { toast(e.message); }
+  });
 }
 
 // ---------- machines & models ----------

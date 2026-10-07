@@ -8,7 +8,8 @@
 //   dropped when a leg starts or ends, and each turn says who spoke: "BB" for
 //   the manager, the thread's title for a thread.
 // - The Conversations screen: Talk to BB's notebook (Walk, Hey BB, check-ins
-//   and the desk panel) grouped by day, with the same speaker names.
+//   and the desk panel) grouped by day, with the same speaker names and the
+//   threads each conversation started.
 (function (root) {
   const SURFACE_TAGS = { walk: "Walk", "hey-bb": "Hey BB", "check-in": "Check-in", panel: "Desk" };
   const surfaceTag = (surface) => SURFACE_TAGS[surface] || "Desk";
@@ -101,5 +102,22 @@
     };
   }
 
-  root.PocketTalk = { SURFACE_TAGS, surfaceTag, turnSpeaker, groupByDay, duration, createWalkTranscript };
+  /**
+   * The threads a conversation started (Talk to BB's notebook `threads`), flat
+   * and in order, each with its depth under the thread that started it. A
+   * thread the call only asked (a manager) leads the threads it went on to start.
+   */
+  const THREAD_STATES = { "needs-you": "Needs you", working: "Working", done: "Done", error: "Error", archived: "Archived", unknown: "Not found" };
+  function startedRows(threads, depth = 0, out = []) {
+    for (const n of Array.isArray(threads) ? threads : []) {
+      const threadId = threadIdOf(n?.threadId);
+      if (!threadId) continue;
+      const state = [n.via === "asked" ? "You asked this thread" : "", THREAD_STATES[n.state] || "", n.unread ? "unread" : ""].filter(Boolean).join(" · ");
+      out.push({ threadId, title: str(n.title) || "Thread", state, needsYou: n.state === "needs-you", depth });
+      startedRows(n.children, depth + 1, out);
+    }
+    return out;
+  }
+
+  root.PocketTalk = { SURFACE_TAGS, surfaceTag, turnSpeaker, groupByDay, duration, createWalkTranscript, startedRows };
 })(globalThis);

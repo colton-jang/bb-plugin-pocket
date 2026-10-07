@@ -21,6 +21,7 @@ import {
   inQuietHours, interactionNotice, isDeadToken, normalizePrefs, plainText, redacted, replyChoices, safePill, verdict,
   type Choice, type Notice, type NotifState, type NotifyPrefs,
 } from "./notify.ts";
+import { markDictated } from "./dictation.ts";
 
 const threadRow = z.object({
   id: z.string(),
@@ -40,7 +41,14 @@ const threadRow = z.object({
   dismissed: z.boolean(),
   // Set once the thread has gone stale on you: Sol's single recommended reply.
   rec: z.object({ label: z.string(), text: z.string(), reason: z.string(), stake: z.string() }).nullable(),
+  // A run started by a bb automation: it only needs you when it asks something.
+  automation: z.boolean(),
+  // Live child threads: how many, how many still working, how many waiting on you.
+  kids: z.object({ total: z.number(), working: z.number(), needs: z.number() }),
 });
+
+// A child or parent thread, as a link in the thread view.
+const kinRow = z.object({ id: z.string(), title: z.string(), status: z.string(), unread: z.boolean(), pending: z.boolean(), updatedAt: z.number() });
 
 const message = z.object({
   role: z.enum(["user", "assistant"]),
@@ -139,10 +147,13 @@ export const rpcContract = defineRpcContract({
       rec: z.object({ forAt: z.number(), pills: z.array(z.object({ label: z.string(), text: z.string() })), recommended: z.number(), reason: z.string(), stake: z.string() }).nullable(),
       messages: z.array(message),
       interactions: z.array(interaction),
+      parent: kinRow.nullable(),
+      children: z.array(kinRow),
     }),
   },
   send: {
-    input: z.object({ threadId, text: z.string().trim().max(20000), files: z.array(upFile).max(10).optional() })
+    // dictated: the text came from the home mic, so it carries a one-line voice marker.
+    input: z.object({ threadId, text: z.string().trim().max(20000), files: z.array(upFile).max(10).optional(), dictated: z.boolean().optional() })
       .refine((v) => v.text.length > 0 || (v.files?.length ?? 0) > 0, "Nothing to send"),
     output: z.object({ delivery: z.string() }),
   },
@@ -388,6 +399,7 @@ type Dto = {
   pinnedAt?: number | null;
   pinSortKey?: string | null;
   parentThreadId?: string | null;
+  originPluginId?: string | null;
   hasPendingInteraction?: boolean;
   environmentPath?: string | null;
   environmentHostId?: string | null;
@@ -446,6 +458,13 @@ function statusOf(t: Dto): string {
 
 function isUnread(t: Dto): boolean {
   return (t.latestAttentionAt ?? 0) > (t.lastReadAt ?? 0);
+}
+
+// Started by the automations plugin (a scheduled or one-shot run).
+const isAutomation = (t: Dto) => t.originPluginId === "automations";
+
+function kinOf(t: Dto) {
+  return { id: t.id, title: titleOf(t), status: statusOf(t), unread: isUnread(t), pending: Boolean(t.hasPendingInteraction), updatedAt: lastActive(t) };
 }
 
 function lastActive(t: Dto): number {
@@ -1328,7 +1347,7 @@ export default async function plugin(bb: BbPluginApi) {
     try {
       const list = (await bb.sdk.threads.list({ archived: false, limit: 300 })) as Dto[];
       const since = Date.now() - 3 * DAY;
-      const candidates = list.filter((t) => (!t.parentThreadId || t.pinnedAt) && !t.hasPendingInteraction && !isWorking(statusOf(t)) && lastActive(t) >= since);
+      const candidates = list.filter((t) => (!t.parentThreadId || t.pinnedAt) && !isAutomation(t) && !t.hasPendingInteraction && !isWorking(statusOf(t)) && lastActive(t) >= since);
       let made = 0;
       for (const t of candidates) {
         if (made >= 6) break; // bounded per sweep; the rest wait five minutes
@@ -1554,7 +1573,7 @@ export default async function plugin(bb: BbPluginApi) {
             if (n) found.push({ n, threadId: t.id });
           }
           next.ints = next.ints.slice(-50);
-        } else if (fresh && isUnread(t) && !isWorking(statusOf(t))) {
+        } else if (fresh && isUnread(t) && !isWorking(statusOf(t)) && !isAutomation(t)) {
           // 2. The agent finished and its reply is waiting, unread.
           const turn = await lastTurn(t.id);
           if (turn) {
@@ -1572,7 +1591,7 @@ export default async function plugin(bb: BbPluginApi) {
         // 3. A stale-thread recommendation for a message not yet notified. It
         // shows in Needs you whether or not you've read the thread, so it
         // notifies either way.
-        const rec = await currentRec(t).catch(() => null);
+        const rec = isAutomation(t) ? null : await currentRec(t).catch(() => null);
         if (rec && rec.recommended >= 0 && verdict({ forAt: rec.forAt, handledForAt: next.forAt, cutoff, lastReadAt: t.lastReadAt, needsUnread: false }) === "notify") {
           next.forAt = rec.forAt;
           const turn = rec.stake ? null : await lastTurn(t.id).catch(() => null);
@@ -1802,6 +1821,16 @@ export default async function plugin(bb: BbPluginApi) {
       // Top-level threads, plus any child that is pinned or blocked on a
       // question: those are the only children a person acts on directly.
       const shown = (list as Dto[]).filter((t) => !t.parentThreadId || t.hasPendingInteraction || t.pinnedAt);
+      // Children are mostly hidden from Home, so each parent row says what's under it.
+      const kidsOf = new Map<string, { total: number; working: number; needs: number }>();
+      for (const c of list as Dto[]) {
+        if (!c.parentThreadId) continue;
+        const k = kidsOf.get(c.parentThreadId) ?? { total: 0, working: 0, needs: 0 };
+        k.total++;
+        if (isWorking(statusOf(c))) k.working++;
+        else if (c.hasPendingInteraction || isUnread(c)) k.needs++;
+        kidsOf.set(c.parentThreadId, k);
+      }
       const rows = shown.map((t) => ({
         id: t.id,
         projectId: t.projectId,
@@ -1819,9 +1848,12 @@ export default async function plugin(bb: BbPluginApi) {
         dismissed: false,
         hostId: t.environmentHostId ?? null,
         pinSortKey: t.pinSortKey ?? "",
+        automation: isAutomation(t),
+        kids: kidsOf.get(t.id) ?? { total: 0, working: 0, needs: 0 },
       }));
       await Promise.all(shown.map(async (t, i) => {
         if (await isDismissed(t)) { rows[i].dismissed = true; return; }
+        if (isAutomation(t)) return; // no Sol recommendation for automation runs
         const r = await currentRec(t).catch(() => null);
         if (r && r.recommended >= 0 && r.pills[0]) rows[i].rec = { ...r.pills[0], reason: r.reason, stake: r.stake ?? "" };
       }));
@@ -1871,12 +1903,13 @@ export default async function plugin(bb: BbPluginApi) {
     },
 
     async thread({ threadId }) {
-      const [t, timeline, pending, names, waiting] = await Promise.all([
+      const [t, timeline, pending, names, waiting, kids] = await Promise.all([
         bb.sdk.threads.get({ threadId }),
         bb.sdk.threads.timeline({ threadId, segmentLimit: "30" }),
         bb.sdk.threads.interactions.list({ threadId }),
         projectNames(),
         queuedMine(threadId),
+        bb.sdk.threads.list({ parentThreadId: threadId, archived: false, limit: 50 }).catch(() => []),
       ]);
 
       // Your messages, and the last thing the agent said in each turn. Tool
@@ -1941,7 +1974,13 @@ export default async function plugin(bb: BbPluginApi) {
         const s = await bb.storage.kv.get<{ forAt: number }>(`seen:${threadId}`);
         if (!s || s.forAt !== lastMsg.at) await bb.storage.kv.set(`seen:${threadId}`, { forAt: lastMsg.at, at: Date.now() });
       }
-      const rec = await currentRec(dto).catch(() => null);
+      const rec = isAutomation(dto) ? null : await currentRec(dto).catch(() => null);
+      // Up to the parent, down to the live children (newest activity first).
+      let parent: z.infer<typeof kinRow> | null = null;
+      if (dto.parentThreadId) {
+        try { parent = kinOf((await bb.sdk.threads.get({ threadId: dto.parentThreadId })) as unknown as Dto); } catch { /* parent gone */ }
+      }
+      const children = (kids as Dto[]).map(kinOf).sort((a, b) => b.updatedAt - a.updatedAt);
       // Where it runs and what runs it (the thread's model, else the defaults it inherits).
       let machine: { id: string; name: string; online: boolean } | null = null;
       const envId = (t as unknown as { environmentId?: string | null }).environmentId;
@@ -1973,10 +2012,13 @@ export default async function plugin(bb: BbPluginApi) {
           ...waiting.filter((w) => !messages.some((m) => m.role === "user" && m.text === w.text && m.at >= w.at - 1000)),
         ].slice(-MESSAGES_MAX),
         interactions,
+        parent,
+        children,
       };
     },
 
-    async send({ threadId, text, files }) {
+    async send({ threadId, text, files, dictated }) {
+      if (dictated) text = markDictated(text);
       const attached = files?.length ? await attach((await bb.sdk.threads.get({ threadId })).projectId, files) : [];
       const permissionMode = await accessFor(threadId);
       const result = await bb.sdk.threads.send({
@@ -2151,7 +2193,7 @@ export default async function plugin(bb: BbPluginApi) {
       const target = list.find((t) => t.id === mgr.id);
       if (!target) return { ok: false, reason: "no-manager", threadId: null, title: null, delivery: null };
       const permissionMode = await accessFor(target.id);
-      const r = await bb.sdk.threads.send({ threadId: target.id, mode: "auto", input: [{ type: "text", text, mentions: [] }], ...(permissionMode ? { permissionMode } : {}) });
+      const r = await bb.sdk.threads.send({ threadId: target.id, mode: "auto", input: [{ type: "text", text: markDictated(text), mentions: [] }], ...(permissionMode ? { permissionMode } : {}) });
       bb.log.info(`tell -> ${target.id} (${text.length} chars, ${r.delivery})`);
       return { ok: true, reason: null, threadId: target.id, title: titleOf(target), delivery: r.delivery };
     },

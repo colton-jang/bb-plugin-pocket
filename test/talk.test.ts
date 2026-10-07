@@ -120,3 +120,19 @@ test("GET /app puts talk.js inline, and the page's scripts compile", async () =>
   for (const code of scripts) new Script(code); // throws on a syntax error
   assert.match(html, /#\/conversations/);
 });
+
+// Created: 2026-10-04. After a walk: the threads each conversation started, nested, with where each stands.
+test("a conversation's started threads come out flat, in order, with depth and state", () => {
+  const rows = T.startedRows([
+    { threadId: "thr_a", title: "🎙 Draft notes", state: "needs-you", unread: true, via: "started", children: [
+      { threadId: "thr_a1", title: "Its helper", state: "working", unread: false, children: [] }] },
+    { threadId: "thr_mgr", title: "bb manager", state: "done", unread: false, via: "asked", children: [
+      { threadId: "thr_m1", title: "🎙 Voice work", state: "done", unread: true, children: [] }] },
+    { threadId: "not-an-id", title: "dropped", state: "done", children: [] },
+  ]);
+  assert.deepEqual(rows.map((r: any) => [r.threadId, r.depth, r.state]), [
+    ["thr_a", 0, "Needs you · unread"], ["thr_a1", 1, "Working"],
+    ["thr_mgr", 0, "You asked this thread · Done"], ["thr_m1", 1, "Done · unread"]]);
+  assert.equal(rows[0].needsYou, true);
+  assert.deepEqual(T.startedRows(null), [], "an older Talk to BB sends no threads");
+});

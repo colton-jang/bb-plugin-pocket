@@ -10,6 +10,9 @@ or login: if you can open bb, you can open Pocket.
 ## What's in it
 
 - **Home:** Pinned, Needs you, Working, Earlier.
+  - **Needs you:** a question or approval waiting, or a reply you haven't read. A run started by a bb automation
+    only shows there when it asks you something; otherwise its runs collapse to one row in Earlier ("4 runs").
+  - **Sub-threads:** a parent row says how many live child threads it has, and how many are new or working.
   - **Swipe left:** mark read/unread. Keep going to **dismiss** it from Needs you until the agent says something new.
   - **Swipe right:** pin (bb's own pins, so they match desktop).
   - **Opening a thread is a peek** and leaves it unread; marking read is always your call.
@@ -20,12 +23,20 @@ or login: if you can open bb, you can open Pocket.
     names.
   - **Machines:** a line under search shows which of your bb machines are online. A machine that says it's
     connected but hasn't checked in for 5 minutes (a sleeping laptop) counts as offline.
-- **Voice:** hold the big mic to talk. Release to finish, slide up to lock for a long note, slide left to cancel.
+- **Dock:** **Walk** · big mic · **New**. Tap Walk to start a walk (or get back to a live one); hold it for Ambient
+  (iPhone app) and Past talks. Artifacts is the button at the top right, with its count.
+- **Voice:** hold the big mic to talk. In the iPhone app the first press already records (the app grants the mic;
+  iOS asks once per install).
+ Release to finish, slide up to lock for a long note, slide left to cancel.
   - You see the transcript before it sends.
   - It goes to your *manager* thread or any thread you pick. The manager is picked automatically (see settings), or
     long press any thread → *Make manager*. The manager row carries a mic tag.
 - **Threads:** your messages and the agent's final answer per turn, with no tool-call noise.
   - Answer the agent's questions with one tap, allow or deny steps, reply by typing or voice.
+  - **Voice reply:** while the reply box is empty, the send button is a mic. Tap it, talk, tap Done in the same spot:
+    it transcribes and sends after 2 seconds. **Edit** in that window puts the words in the box instead.
+  - **Related threads:** a strip under the title links up to the parent and across to the live child threads.
+
   - **Attach files** with the paperclip (photos, camera, or any file; also on New thread). Big photos are shrunk to
     2048 px before upload. Files go to the thread's project like a desktop attachment, and show under your message.
   - **Thread mentions** (`@thread:thr_…`, or a bare thread id) show as chips with the thread's title. Tap one to

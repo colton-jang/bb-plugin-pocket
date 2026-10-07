@@ -3,6 +3,19 @@
 Changes to Pocket's pages and server. They reach you as soon as your bb reloads the plugin: no app install needed.
 Newest first.
 
+## 0.4.21
+- Walk moves into the dock where Artifacts was. Tap it to start a walk; hold it for Ambient and Past talks.
+  Artifacts is now the button at the top right, with its count.
+- In the iPhone app the big mic records on the first press. No more "Tap the mic once to turn it on".
+- Voice reply in a thread: while the box is empty, the send button is a mic. Tap, talk, tap Done in the same spot, and
+  it transcribes and sends after 2 seconds (Edit keeps the words in the box instead).
+- Child threads: a strip under a thread's title links to its parent and its live sub-threads, and Home rows say how
+  many sub-threads they have.
+- Needs you is quieter: a bb automation run only shows there when it asks you something. Repeat runs collapse to one
+  row in Earlier ("4 runs"), and they no longer get stale-thread recommendations or "your turn" notifications.
+- Conversations: each voice conversation lists the threads it started, nested, with their state (needs a Talk to BB
+  that sends them; older versions show the screen as before).
+
 ## 0.4.20
 - Walk keeps one transcript across a direct thread line and a reconnect, and names who's speaking: BB, or the
   thread's title (tap to open it).

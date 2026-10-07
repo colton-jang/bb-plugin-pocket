@@ -64,7 +64,7 @@
   [hidden] { display: none !important; }
 
   /* ---------- Home ---------- */
-  .home { padding: calc(var(--safe-t) + 20px) 0 calc(var(--safe-b) + 130px); }
+  .home { padding: calc(var(--safe-t) + 20px) 0 calc(var(--safe-b) + 150px); }
   .masthead { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px 6px 20px; }
   .masthead h1 { font-size: 30px; line-height: 1.1; letter-spacing: -0.02em; margin: 0; font-weight: 700; }
   .pill {
@@ -123,6 +123,8 @@
   .row .why { color: var(--amber); font-weight: 600; }
   .row .why.error { color: var(--red); }
   .row .why.unread { color: var(--blue); }
+  .row .pk-kidsmeta { color: var(--muted); }
+  .row .pk-kidsneed { color: var(--blue); }
   .tag.mgrtag { background: color-mix(in srgb, var(--blue) 22%, var(--mine)); color: var(--ink); }
   .tag.mgrtag svg { display: inline-block; }
   .tag {
@@ -139,14 +141,18 @@
   .dock {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
     display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
-    padding: 10px 24px calc(var(--safe-b) + 14px); max-width: 680px; margin: 0 auto;
-    background: linear-gradient(transparent, var(--bg) 38%);
+    padding: 22px 24px calc(var(--safe-b) + 14px); max-width: 680px; margin: 0 auto;
+    /* Solid from the top of the buttons down, so list text never shows through. */
+    background: linear-gradient(color-mix(in srgb, var(--bg) 0%, transparent), var(--bg) 20px);
   }
   .dock-side {
     justify-self: center; border: 0; background: none; display: grid; justify-items: center; gap: 3px;
     color: var(--muted); font-size: 12px; font-weight: 600; position: relative; padding: 6px 10px;
   }
   .dock-side svg { width: 26px; height: 26px; color: var(--ink); }
+  .dock-side { min-width: 64px; min-height: 52px; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  #walkBtn.pk-live, #walkBtn.pk-live svg { color: var(--green); }
+  #walkBtn.pk-held { opacity: .55; }
   .badge {
     position: absolute; top: 0; right: 4px; min-width: 18px; height: 18px; border-radius: 9px; padding: 0 5px;
     background: var(--blue); color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;
@@ -213,6 +219,25 @@
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
   .bar .head .s { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  /* Parent and child threads: a sideways strip under the thread's title. */
+  #kinStrip {
+    grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none;
+    margin: 2px -8px -2px; padding: 4px 12px 2px; -webkit-overflow-scrolling: touch;
+  }
+  #kinStrip::-webkit-scrollbar { display: none; }
+  .pk-kinlabel { flex: none; font-size: 12px; font-weight: 600; color: var(--muted); padding-right: 2px; }
+  .pk-kinchip {
+    flex: none; display: inline-flex; align-items: center; gap: 6px; max-width: 220px; min-height: 34px;
+    padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--ink); text-decoration: none; font-size: 14px; font-weight: 500;
+  }
+  .pk-kinchip span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pk-kinchip.pk-kinup { color: var(--muted); }
+  .pk-kdot { flex: none; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--faint); }
+  .pk-kdot.pk-kw { border: 0; background: var(--green); animation: pulse 1.4s ease-in-out infinite; }
+  .pk-kdot.pk-kq { border: 0; background: var(--amber); }
+  .pk-kdot.pk-ku { border: 0; background: var(--blue); }
+  .pk-kdot.pk-ke { border: 0; background: var(--red); }
   .bar .head .s .live { color: var(--green); }
   .bar .head .s .err { color: var(--red); }
   .bar .head .s .wait { color: var(--amber); }
@@ -406,6 +431,16 @@
   .recbar .grow { flex: 1; color: var(--muted); font-weight: 500; font-size: 15px; }
   .recbar button { border: 0; background: none; color: var(--muted); font-weight: 600; padding: 8px; }
   .recdot { width: 10px; height: 10px; border-radius: 50%; background: var(--red); animation: pulse 1s infinite; }
+  /* Voice reply: the mic owns the send slot while the box is empty, at the
+     send button's size; Done sits in the same spot, so one thumb does it all. */
+  #replyForm .round { width: 40px; height: 40px; }
+  #replyForm #replyMic svg { width: 21px; height: 21px; }
+  #replyForm #replyRecDone:disabled { opacity: .35; }
+  #replyRec { position: relative; }
+  #replyRec .grow { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  #replyRec.pk-vsend .grow { color: var(--ink); }
+  .pk-vdrain { position: absolute; left: 14px; right: 4px; bottom: 0; height: 2px; border-radius: 1px; background: var(--ink); transform-origin: left; opacity: .5; }
+  .pk-vdrain.pk-go { animation: fill 2s linear forwards; }
 
   /* Sheets */
   .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.32); z-index: 20; }
@@ -641,14 +676,10 @@
   .masthead h1 { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .masthead .pill { white-space: nowrap; }
   .pill.icon { padding: 8px 10px; }
-  @media (max-width: 400px) {
-    .masthead { padding-left: 18px; padding-right: 14px; }
-    .masthead h1 { font-size: 24px; }
-    .mbtns { gap: 6px; }
-    .masthead .pill { padding: 7px 10px 7px 8px; gap: 5px; font-size: 13px; }
-    .masthead .pill svg { width: 16px; height: 16px; }
-    .masthead .pill.icon { padding: 7px 8px; }
-  }
+  /* Artifacts moved up from the dock: a 44px round button with its count. */
+  .masthead .pk-artbtn { position: relative; width: 44px; height: 44px; padding: 0; justify-content: center; }
+  .masthead .pk-artbtn svg { width: 22px; height: 22px; }
+  .masthead .pk-artbtn .badge { top: -4px; right: -4px; }
   .conv { border-bottom: 1px solid var(--line); }
   .conv > button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 12px 20px; }
   .conv > button:active { background: var(--tap); }
@@ -672,6 +703,8 @@
   .cact { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 7px 0; color: var(--ink); font-size: 15px; }
   .cact small { display: block; color: var(--muted); font-size: 13px; }
   .cact.link div { color: var(--blue); }
+  .cstarted { border-top: 0; margin: 0 0 8px; padding: 0 0 6px; border-bottom: 1px solid var(--line); }
+  .cact small.needs { color: var(--red); font-weight: 600; }
   .cnotes { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 8px; font-size: 15px; }
   .cnotes p { margin: 4px 0; }
   .cnotes .gone { color: var(--faint); }
@@ -756,9 +789,7 @@
   <div class="masthead">
     <h1>Pocket</h1>
     <div class="mbtns">
-      <button class="pill" id="talkBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><path d="M21 15a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM3 15a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z"/></svg>Walk</button>
-      <button class="pill" id="ambientBtn" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Ambient</button>
-      <button class="pill icon" id="convBtn" hidden aria-label="Conversations" title="Conversations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 10.5h7M8.5 14h4.5"/></svg></button>
+      <button class="pill icon pk-artbtn" id="artBtn" aria-label="Artifacts" title="Artifacts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/></svg><span class="badge" id="artBadge" hidden></span></button>
     </div>
   </div>
   <div class="srchbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search threads and artifacts" enterkeyhint="search" autocomplete="off" autocorrect="off"><button id="qCancel" hidden>Cancel</button></div>
@@ -769,7 +800,7 @@
 </main>
 
 <nav class="dock" id="dock" hidden>
-  <button class="dock-side" id="artBtn" aria-label="Artifacts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/></svg>Artifacts<span class="badge" id="artBadge" hidden></span></button>
+  <button class="dock-side" id="walkBtn" aria-label="Walk. Hold for Ambient and past talks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><path d="M21 15a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM3 15a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z"/></svg><span id="walkLabel">Walk</span></button>
   <button class="mic" id="micBtn" aria-label="Talk to the manager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/></svg></button>
   <button class="dock-side" id="newBtn" aria-label="New thread"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>New</button>
   <div class="to" id="dockTo"></div>
@@ -782,6 +813,7 @@
     <div class="head"><div class="t" id="tTitle"></div><div class="s" id="tSub"></div></div>
     <button class="icon-btn trayb" id="trayBtn" aria-label="Artifacts from this thread"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/></svg><span class="trayb-n" id="trayCount" hidden></span></button>
     <button class="icon-btn" id="menuBtn" aria-label="More"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+    <nav class="pk-kin" id="kinStrip" hidden aria-label="Related threads"></nav>
   </div>
   <div class="messages" id="messages"></div>
   <button class="tobottom" id="toBottom" hidden aria-label="Jump to the latest message"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg><span class="newdot" id="newDot" hidden></span></button>
@@ -794,10 +826,11 @@
     <input type="file" id="replyFiles" multiple hidden>
     <form class="field" id="replyForm">
       <button type="button" class="round pk-attbtn" id="replyAttach" aria-label="Attach files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></svg></button>
-      <button type="button" class="round" id="replyMic" aria-label="Dictate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/></svg></button>
       <textarea id="reply" rows="1" placeholder="Reply"></textarea>
-      <div class="recbar" id="replyRec" hidden><span class="recdot"></span><span id="replyClock">0:00</span><span class="grow" id="replyRecNote">Listening…</span><button type="button" id="replyRecCancel">Cancel</button><button type="button" id="replyRecDone" style="color:var(--ink)">Done</button></div>
-      <button class="round fill" id="sendBtn" disabled aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+      <div class="recbar" id="replyRec" hidden><span class="recdot" id="replyRecDot"></span><span id="replyClock">0:00</span><span class="grow" id="replyRecNote">Listening…</span><button type="button" id="replyRecCancel">Cancel</button><span class="pk-vdrain" id="replyDrain" hidden></span></div>
+      <button type="button" class="round fill" id="replyMic" aria-label="Talk. Tap again to send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/></svg></button>
+      <button type="button" class="round fill" id="replyRecDone" hidden aria-label="Done, send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+      <button class="round fill" id="sendBtn" disabled hidden aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
     </form>
   </div>
 </main>
@@ -1751,6 +1784,14 @@ async function loadHome() {
   schedule(loadHome, 8000, "home");
 }
 
+// "3 sub-threads · 1 working": children aren't rows on Home, so the parent says so.
+function kidsMeta(t) {
+  const k = t.kids;
+  if (!k?.total) return "";
+  const more = k.needs ? ` · <span class="pk-kidsneed">${k.needs} new</span>` : k.working ? ` · ${k.working} working` : "";
+  return `<span class="pk-kidsmeta">${k.total} sub-thread${k.total === 1 ? "" : "s"}${more}</span> · `;
+}
+
 function rowHtml(t, quiet, needs = false) {
   const k = kindOf(t);
   const why = k === "question" ? `<span class="why">Waiting on you</span> · `
@@ -1769,21 +1810,20 @@ function rowHtml(t, quiet, needs = false) {
     <a class="row${quiet ? " quiet" : ""}" href="#/t/${t.id}" draggable="false">
     <span class="dot ${k === "idle" && t.unread ? "reply" : k}"></span>
     <span><div class="title">${esc(t.title)}</div>${preview}${rec}
-    <div class="meta">${tag}${offline}${why}${esc(t.projectName)} · ${ago(t.updatedAt)}</div></span></a></li>`;
+    <div class="meta">${tag}${offline}${why}${kidsMeta(t)}${esc(t.projectName)} · ${ago(t.updatedAt)}${t.runs > 1 ? ` · ${t.runs} runs` : ""}</div></span></a></li>`;
 }
 
 function renderHome() {
   const all = state.home.threads;
   const pinned = all.filter((t) => t.pinned);
   const rest0 = all.filter((t) => !t.pinned);
-  // Needs you = a question is waiting, or something new you haven't read.
-  const needs = rest0.filter((t) => !t.dismissed && (t.pending || t.rec || (t.unread && !isWorking(t.status))));
+  const needs = rest0.filter(needsYou);
   needs.sort((a, b) => rank(a) - rank(b) || b.updatedAt - a.updatedAt);
   const working = rest0.filter((t) => !t.pending && isWorking(t.status));
-  const rest = rest0.filter((t) => !needs.includes(t) && !working.includes(t));
+  const rest = groupRuns(rest0.filter((t) => !needs.includes(t) && !working.includes(t)));
   const shownRest = state.showAll ? rest.slice(0, 80) : rest.slice(0, 8);
 
-  const waiting = all.filter((t) => !t.dismissed && (t.pending || t.rec || (t.unread && !isWorking(t.status)))).length;
+  const waiting = all.filter(needsYou).length;
   const bits = [];
   if (waiting) bits.push(`${waiting} need${waiting === 1 ? "s" : ""} you`);
   const busy = all.filter((t) => isWorking(t.status)).length;
@@ -1818,21 +1858,12 @@ function renderHome() {
   const more = $("moreBtn");
   if (more) more.onclick = () => { state.showAll = true; renderHome(); };
 
-  // Walk needs the Talk to BB plugin; without it there's no button.
+  // Walk needs the Talk to BB plugin; without it the dock slot stays empty.
+  // A live Walk or Ambient keeps running while you look around; say so.
   const wphase = walkPhase();
-  $("talkBtn").hidden = !state.home.walk && wphase === "idle";
-  // A Walk call keeps running while you look around; say so.
-  $("talkBtn").lastChild.textContent = wphase === "idle" ? "Walk" : "● Live";
-  $("talkBtn").style.color = wphase === "idle" ? "" : "var(--green)";
-  // Past voice conversations live in Talk to BB's notebook.
-  $("convBtn").hidden = !state.home.walk;
-  // Ambient Walk (iPhone app only): music plus spoken check-ins.
-  const canAmbient = !!window.pocketNative?.features?.includes?.("ambient");
-  $("ambientBtn").hidden = !canAmbient;
-  if (canAmbient) {
-    $("ambientBtn").lastChild.textContent = nativeAmbient.on ? "● Ambient" : "Ambient";
-    $("ambientBtn").style.color = nativeAmbient.on ? "var(--green)" : "";
-  }
+  $("walkBtn").style.visibility = !state.home.walk && wphase === "idle" && !nativeAmbient.on ? "hidden" : "";
+  $("walkLabel").textContent = wphase !== "idle" ? "● Live" : nativeAmbient.on ? "● Ambient" : "Walk";
+  $("walkBtn").classList.toggle("pk-live", wphase !== "idle" || nativeAmbient.on);
   renderMachineLine();
   const n = state.home.newArtifacts;
   $("artBadge").hidden = !n;
@@ -1841,6 +1872,32 @@ function renderHome() {
   dockHint();
 }
 const rank = (t) => ({ question: 0, error: 1, reply: 2 }[kindOf(t)] ?? 3);
+
+// Needs you = a question or approval is waiting, or something new you haven't
+// read. An automation run only counts when it actually asks you something.
+function needsYou(t) {
+  if (t.dismissed) return false;
+  if (t.pending) return true;
+  if (t.automation) return false;
+  return !!t.rec || (t.unread && !isWorking(t.status));
+}
+
+// Repeated automation runs collapse to one row (the newest run) with a count.
+// The list arrives newest first.
+function groupRuns(list) {
+  const groups = new Map();
+  const out = [];
+  for (const t of list) {
+    if (!t.automation) { out.push(t); continue; }
+    const k = `${t.projectId}\u0000${t.title}`;
+    const g = groups.get(k);
+    if (g) { g.runs++; continue; }
+    const row = { ...t, runs: 1 };
+    groups.set(k, row);
+    out.push(row);
+  }
+  return out;
+}
 
 // Swipe: left toggles read, right toggles pin. Past ~28% of the width the
 // action arms; releasing commits it. Vertical drags stay scrolls.
@@ -2064,17 +2121,53 @@ window.addEventListener("pocketnative", (e) => {
   if (m.phase === "idle" && m.message) walkStatus(m.message);
   if (state.home) renderHome();
 });
-$("convBtn").onclick = () => { location.hash = "#/conversations"; };
-$("talkBtn").onclick = () => { if (window.pocketNative?.available) startNativeWalk(); else location.hash = "#/walk"; };
-$("ambientBtn").onclick = () => {
-  if (!window.pocketNative?.features?.includes?.("ambient")) return;
-  if (nativeAmbient.on) {
-    if (confirm(`Stop Ambient Walk?${nativeAmbient.lastCheckIn ? `\n\nLast check-in: ${nativeAmbient.lastCheckIn}` : ""}`)) window.pocketNative.post({ type: "ambient", op: "stop" });
-  } else {
-    buzz("light");
-    window.pocketNative.post({ type: "ambient", op: "start" }); // the app asks first if a live Walk is running
-  }
-};
+// Walk in the dock: a tap starts a walk (or brings back the live one); a hold
+// offers Ambient and past talks.
+function walkTap() {
+  if (window.pocketNative?.available) return startNativeWalk(); // the app shows a live Walk instead of starting another
+  location.hash = "#/walk";
+  if (walk.phase === "idle") startWalk(); // still inside the tap, so iOS lets the audio start
+}
+function walkMenu() {
+  const canAmbient = !!window.pocketNative?.features?.includes?.("ambient");
+  const live = walkPhase() !== "idle";
+  const items = [
+    live ? `<button data-a="open">Back to the live Walk</button>` : "",
+    canAmbient ? (nativeAmbient.on
+      ? `<button data-a="ambStop">Stop Ambient</button>`
+      : `<button data-a="ambStart">Ambient: music plus spoken check-ins</button>`) : "",
+    state.home?.walk ? `<button data-a="past">Past talks</button>` : "",
+    `<button data-close>Cancel</button>`,
+  ].join("");
+  const note = nativeAmbient.on && nativeAmbient.lastCheckIn ? `Last check-in: ${nativeAmbient.lastCheckIn}` : "Walk";
+  const sheet = openSheet(`<div class="menu"><div class="hint" style="margin:0 12px 6px">${esc(note)}</div>${items}</div>`);
+  sheet.querySelectorAll("[data-a]").forEach((b) => b.onclick = () => {
+    closeSheet();
+    const a = b.dataset.a;
+    if (a === "open") walkTap();
+    if (a === "past") location.hash = "#/conversations";
+    if (a === "ambStop") window.pocketNative.post({ type: "ambient", op: "stop" });
+    if (a === "ambStart") { buzz("light"); window.pocketNative.post({ type: "ambient", op: "start" }); } // the app asks first if a live Walk is running
+  });
+  sheet.querySelectorAll("[data-close]").forEach((b) => b.onclick = closeSheet);
+}
+{
+  const wb = $("walkBtn");
+  let timer = 0, held = false, x0 = 0, y0 = 0;
+  const clear = () => { clearTimeout(timer); timer = 0; wb.classList.remove("pk-held"); };
+  wb.addEventListener("contextmenu", (e) => e.preventDefault());
+  wb.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    held = false; x0 = e.clientX; y0 = e.clientY;
+    wb.classList.add("pk-held");
+    timer = setTimeout(() => { clear(); held = true; buzz("medium"); walkMenu(); }, 500);
+  });
+  wb.addEventListener("pointermove", (e) => { if (timer && Math.hypot(e.clientX - x0, e.clientY - y0) > 10) clear(); });
+  wb.addEventListener("pointerup", clear);
+  wb.addEventListener("pointercancel", clear);
+  wb.addEventListener("pointerleave", clear);
+  wb.addEventListener("click", (e) => { e.preventDefault(); if (held) { held = false; return; } walkTap(); });
+}
 
 // ---------- hold to talk ----------
 // Press: recording starts. Release: transcribe and review. Slide up onto the
@@ -2158,15 +2251,17 @@ for (const ev of ["touchend", "click"]) document.addEventListener(ev, primeCues,
 
 // Safari asks for the mic once per page load. That prompt used to land in the
 // middle of the first hold and swallow the release, so until the mic has been
-// granted in this page the first press only turns it on.
-let micReady = false;
+// granted in this page the first press only turns it on. The iPhone app grants
+// the mic to this page itself (iOS asks once per install), so there the first
+// press already records.
+let micReady = !!window.pocketNative?.available;
 function dockHint() {
   const mgr = threadById(state.home?.managerId);
   $("dockTo").textContent = !micReady ? "Tap the mic once to turn it on"
     : mgr ? `Hold to talk to ${mgr.title}` : "Hold to talk · no manager thread found, you'll pick where it goes";
 }
 navigator.permissions?.query({ name: "microphone" }).then((p) => {
-  micReady = p.state === "granted";
+  micReady = micReady || p.state === "granted";
   p.onchange = () => { micReady = micReady || p.state === "granted"; dockHint(); };
   dockHint();
 }).catch(() => {});
@@ -2366,7 +2461,7 @@ async function sendVoice() {
   const btn = $("vSend");
   if (btn) btn.disabled = true;
   try {
-    const r = await rpc("send", { threadId: id, text });
+    const r = await rpc("send", { threadId: id, text, dictated: true });
     voice.phase = "idle";
     closeSheet();
     toast(r.delivery === "queued" ? "Queued for when it's free" : `Sent to ${targetLabel(id).who}`);
@@ -2433,6 +2528,28 @@ function renderThreadHead() {
   $("execBtn").onclick = execSheet;
   const mr = $("markRead");
   if (mr) mr.onclick = () => toggleRead(t.id);
+  renderKin(t);
+}
+
+// Up to the parent, across to the live children: most of the real work
+// happens in child threads, which Home doesn't list.
+function renderKin(t) {
+  const strip = $("kinStrip");
+  const kids = t.children || [];
+  const key = JSON.stringify([t.id, t.parent, kids]);
+  if (strip.dataset.key === key) return; // polls redraw the head; keep the strip's scroll
+  strip.dataset.key = key;
+  const dot = (k) => `<span class="pk-kdot${k.pending ? " pk-kq" : isWorking(k.status) ? " pk-kw" : k.status === "error" ? " pk-ke" : k.unread ? " pk-ku" : ""}"></span>`;
+  const parts = [];
+  if (t.parent) parts.push(`<a class="pk-kinchip pk-kinup" href="#/t/${esc(t.parent.id)}" aria-label="Parent thread: ${esc(t.parent.title)}"><span>↑</span><span>${esc(t.parent.title)}</span></a>`);
+  if (kids.length) {
+    const busy = kids.filter((k) => isWorking(k.status)).length;
+    parts.push(`<span class="pk-kinlabel">${kids.length} sub-thread${kids.length === 1 ? "" : "s"}${busy ? ` · ${busy} working` : ""}</span>`);
+    for (const k of kids) parts.push(`<a class="pk-kinchip" href="#/t/${esc(k.id)}">${dot(k)}<span>${esc(k.title)}</span></a>`);
+  }
+  strip.innerHTML = parts.join("");
+  strip.hidden = !parts.length;
+  strip.scrollLeft = 0;
 }
 
 // ---------- jump to latest ----------
@@ -2779,7 +2896,14 @@ document.addEventListener("click", (e) => {
 const reply = $("reply");
 function grow(el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, window.innerHeight * 0.4) + "px"; }
 const replyAtt = attachList($("replyAtt"), () => syncSend());
-const syncSend = () => { $("sendBtn").disabled = (!reply.value.trim() && !replyAtt.items.length) || recorder.active || state.busy; };
+const syncSend = () => {
+  const empty = !reply.value.trim() && !replyAtt.items.length;
+  const recording = !$("replyRec").hidden;
+  $("sendBtn").disabled = empty || recorder.active || state.busy;
+  $("sendBtn").hidden = empty || recording;
+  $("replyMic").hidden = !empty || recording;
+  $("replyMic").disabled = state.busy;
+};
 $("replyAttach").onclick = () => $("replyFiles").click();
 $("replyFiles").onchange = async (e) => { const files = [...e.target.files]; e.target.value = ""; if (state.thread) await replyAtt.add(files, state.thread.id); };
 reply.addEventListener("input", () => { grow(reply); syncSend(); });
@@ -2837,14 +2961,78 @@ function dictateInto(ui) {
   };
 }
 
-$("replyMic").onclick = dictateInto({
-  box: reply,
-  on() { $("replyMic").hidden = true; reply.hidden = true; $("sendBtn").hidden = true; $("replyRec").hidden = false; $("replyRecNote").textContent = "Listening…"; $("replyClock").textContent = "0:00"; syncSend(); },
-  tick(s) { $("replyClock").textContent = mmss(s); },
-  busy() { $("replyRecNote").textContent = "Transcribing…"; },
-  off() { $("replyMic").hidden = false; reply.hidden = false; $("sendBtn").hidden = false; $("replyRec").hidden = true; syncSend(); grow(reply); },
-  bind(done, cancel) { $("replyRecDone").onclick = done; $("replyRecCancel").onclick = cancel; },
-});
+// Voice reply, like ChatGPT: tap the mic, talk, tap Done (same spot). It
+// transcribes and sends after a 2 s window; Edit in that window puts the words
+// in the box instead, so a bad transcript never has to go out.
+const VOICE_SEND_MS = 2000;
+function replyVoiceUi(mode, note = "") {
+  const rec = mode !== "off";
+  $("replyRec").hidden = !rec;
+  reply.hidden = rec;
+  $("replyAttach").hidden = rec;
+  $("replyRecDone").hidden = !rec;
+  $("replyRecDone").disabled = mode === "busy";
+  $("replyRecDot").hidden = mode === "sending";
+  $("replyClock").hidden = mode === "sending";
+  $("replyRec").classList.toggle("pk-vsend", mode === "sending");
+  $("replyRecCancel").textContent = mode === "sending" ? "Edit" : "Cancel";
+  $("replyDrain").hidden = mode !== "sending";
+  $("replyDrain").classList.toggle("pk-go", mode === "sending");
+  if (note) $("replyRecNote").textContent = note;
+  if (mode === "rec") $("replyClock").textContent = "0:00";
+  syncSend();
+  if (!rec) grow(reply);
+}
+$("replyMic").onclick = async () => {
+  const t = state.thread;
+  if (!t || recorder.active || state.busy) return;
+  buzz("light");
+  cues.unlock();
+  replyVoiceUi("rec", "Listening…");
+  try {
+    await recorder.start((secs) => { $("replyClock").textContent = mmss(secs); if (secs > 600) done(); });
+    cues.start();
+  } catch (e) { replyVoiceUi("off"); toast(micError(e)); return; }
+  let finished = false, timer = 0, text = "";
+  const send = async () => {
+    clearTimeout(timer);
+    if (finished) return; finished = true;
+    replyVoiceUi("off");
+    state.busy = true; syncSend();
+    try {
+      const r = await rpc("send", { threadId: t.id, text, dictated: true });
+      toast(r.delivery === "queued" ? "Queued. It goes in after the current step." : "Sent");
+      refreshSoon(t.id);
+    } catch (e) {
+      // Nothing lost: the words go back in the box.
+      reply.value = reply.value.trim() ? `${reply.value.trim()} ${text}` : text;
+      toast(e.message);
+    } finally { state.busy = false; replyVoiceUi("off"); }
+  };
+  async function done() {
+    if (finished || $("replyRecDone").disabled) return;
+    $("replyRecDone").disabled = true;
+    replyVoiceUi("busy", "Transcribing…");
+    queueMicrotask(() => cues.stop());
+    const blob = await recorder.stop();
+    try { text = (await transcribe(blob)).trim(); } catch (e) { finished = true; replyVoiceUi("off"); toast(e.message); return; }
+    if (!text) { finished = true; replyVoiceUi("off"); toast("Didn't catch anything. Try again."); return; }
+    replyVoiceUi("sending", `“${text}”`);
+    $("replyRecDone").onclick = send; // tap again: send now
+    timer = setTimeout(send, VOICE_SEND_MS);
+  }
+  $("replyRecDone").onclick = () => { buzz("light"); done(); };
+  $("replyRecCancel").onclick = () => {
+    clearTimeout(timer);
+    if (finished) return; finished = true;
+    if (text) {
+      // Edit: keep the words, don't send.
+      reply.value = reply.value.trim() ? `${reply.value.trim()} ${text}` : text;
+    } else { recorder.cancel(); cues.cancel(); }
+    replyVoiceUi("off");
+    if (text) reply.focus();
+  };
+};
 
 // menu
 $("menuBtn").onclick = () => {
@@ -3339,7 +3527,8 @@ function convoRow(x) {
     `<span>${esc(new Date(at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }))}</span>`];
   if (!x.endedAt) bits.push(`<span class="live">● Live</span>`);
   else if (x.seconds) bits.push(`<span>· ${esc(PocketTalk.duration(x.seconds))}</span>`);
-  if (x.actionCount) bits.push(`<span>· ${x.actionCount} action${x.actionCount === 1 ? "" : "s"}</span>`);
+  if (x.threadCount) bits.push(`<span>· ${x.threadCount} thread${x.threadCount === 1 ? "" : "s"} started</span>`);
+  else if (x.actionCount) bits.push(`<span>· ${x.actionCount} action${x.actionCount === 1 ? "" : "s"}</span>`);
   if (x.noteCount) bits.push(`<span>· ${x.noteCount} note${x.noteCount === 1 ? "" : "s"}</span>`);
   const open = convo.open.has(x.id);
   return `<div class="conv" data-id="${esc(x.id)}"><button aria-expanded="${open}"><div class="cm">${bits.join("")}</div>
@@ -3352,6 +3541,10 @@ function convoBody(id) {
   if (d.error) return `<p class="hint" style="margin:0">Couldn't load this one. ${esc(d.error)}</p>`;
   if (d.missing) return `<p class="hint" style="margin:0">This conversation is no longer kept.</p>`;
   const html = [];
+  // The threads it started come first: that's what you're looking for after a walk.
+  const started = PocketTalk.startedRows(d.threads);
+  if (started.length) html.push(`<div class="cacts cstarted"><h3>Threads started</h3>${started.map((r) =>
+    `<button class="cact link" data-t="${esc(r.threadId)}" style="margin-left:${r.depth * 14}px"><div>${esc(r.title)}</div><small${r.needsYou ? ' class="needs"' : ""}>${esc(r.state)}</small></button>`).join("")}</div>`);
   let prev = null;
   for (const t of d.turns || []) {
     const who = PocketTalk.turnSpeaker(t, { titleOf: titleOfThread });
@@ -3870,7 +4063,7 @@ $("threadTrayClose").onclick = closeThreadTray;
 // Forgiving on purpose: a thumb swipe arcs, so it only has to be mostly
 // sideways. The decision is made on the move or, failing that, on release.
 (() => {
-  const SKIP = "pre, .table, #pills, .composer, .card, #sheetWrap, #pkFileView";
+  const SKIP = "pre, .table, #pills, .composer, .card, #sheetWrap, #pkFileView, #kinStrip";
   let x0 = 0, y0 = 0, dx = 0, dy = 0, live = false, fired = false, moves = 0, why = "", target = "";
   const decide = (trayOpen) => {
     // The tray lives on the right and is pulled in from the right: a leftward
